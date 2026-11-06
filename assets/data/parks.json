@@ -1,0 +1,6 @@
+[
+  {"id": "sample-1", "name": "한강 둔치 파크골프장", "address": "", "region": "서울", "holes": 18, "courses": 2, "sample": true},
+  {"id": "sample-2", "name": "레이크사이드 파크골프장", "address": "", "region": "경기", "holes": 27, "courses": 3, "sample": true},
+  {"id": "sample-3", "name": "탄천 파크골프장", "address": "", "region": "경기", "holes": 18, "courses": 2, "sample": true},
+  {"id": "sample-4", "name": "올림픽공원 파크골프장", "address": "", "region": "서울", "holes": 36, "courses": 4, "sample": true}
+]
