@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Figma "Theme" 컬러 변수(Light / Dark)를 그대로 옮긴 토큰.
 @immutable
@@ -99,6 +100,21 @@ extension AppColorsX on BuildContext {
 
 const kFont = 'Pretendard';
 
+/// 상태바 · 하단 내비게이션 바: 투명 배경 + 화면 모드에 맞는 아이콘 색.
+SystemUiOverlayStyle systemBarsStyle(Brightness b) {
+  final dark = b == Brightness.dark;
+  return SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    statusBarBrightness: b, // iOS
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+    systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    systemNavigationBarContrastEnforced: false,
+    systemStatusBarContrastEnforced: false,
+  );
+}
+
 ThemeData buildTheme(Brightness b) {
   final c = b == Brightness.light ? AppColors.light : AppColors.dark;
   final scheme = ColorScheme.fromSeed(
@@ -124,6 +140,7 @@ ThemeData buildTheme(Brightness b) {
       foregroundColor: c.textPrimary,
       elevation: 0,
       scrolledUnderElevation: 0,
+      systemOverlayStyle: systemBarsStyle(b),
       centerTitle: false,
       titleSpacing: 0,
       titleTextStyle: TextStyle(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +12,8 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 상태바 · 하단 내비게이션 바까지 앱 배경을 그려요 (검은 띠 없이).
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   final store = await AppStore.open(
     await Storage.create(),
     await ParkCatalog.load(),
@@ -49,6 +52,11 @@ class ParkGolfDiaryApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // 화면 모드(라이트 / 다크)에 맞춰 시스템 바 아이콘 색을 바꿔요.
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            value: systemBarsStyle(Theme.of(context).brightness),
+            child: child!,
+          ),
           home: home ?? const SplashScreen(),
         ),
       ),
