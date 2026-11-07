@@ -37,9 +37,9 @@ class MainShellState extends State<MainShell> {
           children: const [HomeScreen(), RecordsScreen(), MyScreen()],
         ),
       ),
-      // Figma BOTTOM (2144:12340): 알약 탭바 194×50 · 아래 여백 34 · 그림자 없음
+      // Figma BOTTOM (2144:12340): 알약 탭바 194×50 · 아래 여백 54 · 그림자 없음
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.only(bottom: 34),
+        minimum: const EdgeInsets.only(bottom: 54),
         child: Center(
           heightFactor: 1,
           child: Container(
