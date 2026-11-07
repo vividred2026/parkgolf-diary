@@ -14,6 +14,7 @@ class FoundDevice {
     required this.audio,
     required this.mic,
     required this.bonded,
+    this.pods = false,
   });
 
   final String name;
@@ -21,6 +22,18 @@ class FoundDevice {
   final bool audio;
   final bool mic;
   bool bonded;
+
+  /// 이름으로 에어팟 · 비츠로 보이는 기기 (목록 맨 위).
+  final bool pods;
+}
+
+/// 페어링 · 연결 진행 기록 한 줄 (EP-04 → 연결 중 시트).
+class PairLine {
+  PairLine(this.at, this.text, {this.done = false, this.failed = false});
+  final DateTime at;
+  final String text;
+  final bool done;
+  final bool failed;
 }
 
 enum AacpState { none, connecting, connected, failed }
@@ -50,6 +63,15 @@ class EarphoneService extends ChangeNotifier {
   AacpState aacp = AacpState.none;
   ListenMode? listenMode;
   EarInfo? info;
+
+  /// false 면 지난 연결 때 저장해 둔 정보 (정보는 연결 직후 한 번만 와요).
+  bool infoFresh = false;
+
+  /// 지금 연결 중인 기기 · 진행 기록.
+  String? pairingName;
+  final List<PairLine> pairLog = [];
+  bool get pairDone => pairLog.isNotEmpty && pairLog.last.done;
+  bool get pairFailed => pairLog.isNotEmpty && pairLog.last.failed;
 
   bool permissionsOk = false;
   bool discovering = false;
@@ -112,6 +134,7 @@ class EarphoneService extends ChangeNotifier {
     );
     aacp = AacpState.connected;
     listenMode = ListenMode.transparency;
+    infoFresh = true;
     info = const EarInfo(
       name: '라이언의 Buds',
       model: 'SM-R630',
@@ -135,6 +158,7 @@ class EarphoneService extends ChangeNotifier {
           audio: true,
           mic: true,
           bonded: false,
+          pods: true,
         ),
         'c': FoundDevice(
           name: 'JBL Go 3',
@@ -241,8 +265,11 @@ class EarphoneService extends ChangeNotifier {
           audio: e['audio'] == true,
           mic: e['mic'] == true || e['headset'] == true,
           bonded: e['bonded'] == true,
+          pods: e['pods'] == true,
         );
         notifyListeners();
+      case 'pairStep':
+        _pairStep(e['step'] as String?, e['detail'] as String?);
       case 'discoveryDone':
         discovering = false;
         notifyListeners();
@@ -287,7 +314,10 @@ class EarphoneService extends ChangeNotifier {
           if (u == null) return;
           if (u.pods != null) pods = pods.merge(u.pods!);
           if (u.listenMode != null) listenMode = u.listenMode;
-          if (u.info != null) info = u.info;
+          if (u.info != null) {
+            info = u.info;
+            infoFresh = e['cached'] != true;
+          }
           notifyListeners();
         }
     }
@@ -307,6 +337,7 @@ class EarphoneService extends ChangeNotifier {
         audio: true,
         mic: m['mic'] == true || m['headset'] == true,
         bonded: true,
+        pods: m['pods'] == true,
       );
     }
     notifyListeners();
@@ -326,11 +357,79 @@ class EarphoneService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _pairStep(String? step, String? detail) {
+    final line = switch (step) {
+      'requested' => '페어링 요청 보냄 — 화면에 요청이 뜨면 허용해 주세요',
+      'requestFailed' => '페어링을 시작하지 못했어요 → 블루투스 설정에서 페어링해 주세요',
+      'alreadyBonded' => '이미 페어링된 기기 → 연결만 시도',
+      'bonding' => '페어링 진행 중',
+      'bondFailed' => '페어링 안 됨(거부 · 취소 · 실패) → 다시 시도하거나 블루투스 설정에서 페어링해 주세요',
+      'waiting' => '페어링 완료 · 휴대폰이 자동으로 연결하는지 기다리는 중(3초)…',
+      'direct' =>
+        detail == 'true'
+            ? '음악 · 통화 연결을 직접 요청했어요'
+            : '이 휴대폰은 앱에서 직접 연결을 허용하지 않아요 · 조금 더 기다려요',
+      'musicConnecting' => '음악 연결 중',
+      'callConnecting' => '통화(마이크) 연결 중',
+      'musicConnected' => '음악 연결됨',
+      'callConnected' => '통화(마이크) 연결됨',
+      'done' => '연결 완료 — 잠시 후 배터리가 표시돼요',
+      'timeout' => '아직 연결되지 않았어요 → 블루투스 설정에서 이어폰을 눌러 연결해 주세요',
+      _ => null,
+    };
+    if (line == null) return;
+    pairLog.add(
+      PairLine(
+        DateTime.now(),
+        line,
+        done: step == 'done',
+        failed:
+            step == 'timeout' ||
+            step == 'bondFailed' ||
+            step == 'requestFailed',
+      ),
+    );
+    if (step == 'done' ||
+        step == 'timeout' ||
+        step == 'bondFailed' ||
+        step == 'requestFailed') {
+      bondingAddress = null;
+    }
+    notifyListeners();
+  }
+
+  void clearPairLog() {
+    pairLog.clear();
+    pairingName = null;
+  }
+
   Future<bool> pair(FoundDevice d) async {
     bondingAddress = d.address;
+    pairingName = d.name;
+    pairLog
+      ..clear()
+      ..add(PairLine(DateTime.now(), '${d.name} 선택'));
     notifyListeners();
+    if (demo) {
+      Future.delayed(
+        const Duration(milliseconds: 600),
+        () => _pairStep('done', null),
+      );
+      return true;
+    }
     final ok = (await _call<bool>('pair', {'address': d.address})) ?? demo;
-    if (!ok) bondingAddress = null;
+    if (!ok) {
+      bondingAddress = null;
+      if (!pairFailed) {
+        pairLog.add(
+          PairLine(
+            DateTime.now(),
+            '연결을 시작하지 못했어요 → 블루투스 설정에서 연결해 주세요',
+            failed: true,
+          ),
+        );
+      }
+    }
     notifyListeners();
     return ok;
   }

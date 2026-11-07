@@ -28,6 +28,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 /**
  * 블루투스 이어폰 연동 (Android).
@@ -36,7 +37,8 @@ import io.flutter.plugin.common.MethodChannel
  * - 에어팟 BLE 광고(애플 0x004C) 원본 전달 → Dart에서 왼쪽 · 오른쪽 · 케이스 배터리 · 착용 해석
  * - 에어팟 AACP(L2CAP 0x1001) 채널: 착용 · 1% 배터리 · 청취 모드 · 기기 정보 · 이름 변경 (휴대폰이 허용할 때만)
  * - 이어폰 마이크(SCO)로 음성 입력
- * 숨김 API는 일반 반사로만 시도하고, 막힌 휴대폰에서는 조용히 실패해요.
+ * 숨김 API는 AOS-Pods full 처럼 블루투스 클래스만 제한 예외로 두고(hiddenapibypass) 반사로 불러요.
+ * → 안드로이드 17 삼성처럼 막힌 휴대폰에서도 AACP가 열려요. 대신 구글 플레이에는 올릴 수 없어요(사이드로드 전용).
  */
 class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
     MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
@@ -55,11 +57,27 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
     private var receiverOn = false
     private var bleCallback: ScanCallback? = null
     @Volatile private var aacp: Aacp? = null
+    private var screenOn = true
+    private val prefs = ctx.getSharedPreferences("earphone", Context.MODE_PRIVATE)
 
     init {
+        allowHiddenBluetooth()
         method.setMethodCallHandler(this)
         events.setStreamHandler(this)
         bindProfiles()
+    }
+
+    /** 숨김 API 제한에서 블루투스 클래스만 예외로 (AACP 소켓 · 배터리 조회 · 프로파일 연결). */
+    private fun allowHiddenBluetooth() {
+        if (Build.VERSION.SDK_INT < 28) return
+        try {
+            HiddenApiBypass.addHiddenApiExemptions(
+                "Landroid/bluetooth/BluetoothSocket;",
+                "Landroid/bluetooth/BluetoothDevice;",
+                "Landroid/bluetooth/BluetoothA2dp;",
+                "Landroid/bluetooth/BluetoothHeadset;",
+            )
+        } catch (_: Throwable) {}
     }
 
     // ── 전달 ─────────────────────────────
@@ -167,20 +185,24 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
         (safe { adapter?.bondedDevices?.toList() } ?: emptyList()).map { describe(it, true) }
 
     @SuppressLint("MissingPermission")
-    private fun describe(d: BluetoothDevice, bonded: Boolean): Map<String, Any?> {
-        val cls = safe { d.bluetoothClass }
+    private fun describe(d: BluetoothDevice, bonded: Boolean, extraName: String? = null,
+                         extraClass: BluetoothClass? = null): Map<String, Any?> {
+        val cls = extraClass ?: safe { d.bluetoothClass }
         val major = cls?.majorDeviceClass
-        val audio = major == BluetoothClass.Device.Major.AUDIO_VIDEO
-        val mic = cls?.hasService(BluetoothClass.Service.AUDIO) == true &&
+        val name = extraName?.takeIf { it.isNotBlank() } ?: safe { d.alias ?: d.name } ?: safe { d.name }
+        val pods = name != null && PODS.containsMatchIn(name)
+        val audio = pods || major == BluetoothClass.Device.Major.AUDIO_VIDEO
+        val mic = pods || cls?.hasService(BluetoothClass.Service.AUDIO) == true &&
             (cls.deviceClass == BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET ||
                 cls.deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE ||
                 safe { cls.hasService(BluetoothClass.Service.TELEPHONY) } == true ||
                 cls.deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES)
         return mapOf(
             "type" to "found",
-            "name" to (safe { d.alias ?: d.name } ?: safe { d.name }),
+            "name" to name,
             "address" to d.address,
             "audio" to audio,
+            "pods" to pods,
             "headset" to (cls?.deviceClass == BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET ||
                 cls?.deviceClass == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE),
             "mic" to mic,
@@ -200,8 +222,42 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
     private fun pair(address: String): Boolean {
         val d = device(address) ?: return false
         safe { adapter?.cancelDiscovery() }
-        if (d.bondState == BluetoothDevice.BOND_BONDED) return connectProfiles(d, true)
-        return d.createBond()
+        registerReceiver()
+        main.removeCallbacksAndMessages(PAIR_TOKEN)
+        pairingAddress = d.address
+        if (d.bondState == BluetoothDevice.BOND_BONDED) {
+            pairStep("alreadyBonded")
+            afterBonded(d)
+            return true
+        }
+        val ok = safe { d.createBond() } ?: false
+        if (ok) pairStep("requested") else { pairStep("requestFailed"); pairingAddress = null }
+        return ok
+    }
+
+    @Volatile private var pairingAddress: String? = null
+
+    private fun pairStep(step: String, detail: String? = null) =
+        emit(mapOf("type" to "pairStep", "address" to pairingAddress, "step" to step, "detail" to detail))
+
+    private fun isConnected(d: BluetoothDevice): Boolean = connectedDevice()?.address == d.address
+
+    /** 페어링(본딩) 뒤: 시스템이 알아서 연결하는지 3초 기다리고, 안 되면 음악 · 통화 프로파일을 직접 연결해 봐요.
+     *  설정 앱 페어링은 시스템이 연결까지 해 주지만, 앱이 createBond()로 페어링하면 본딩만 되는 휴대폰이 있어요(AOS-Pods 실기기). */
+    private fun afterBonded(d: BluetoothDevice) {
+        main.removeCallbacksAndMessages(PAIR_TOKEN)
+        if (isConnected(d)) { pairStep("done"); pairingAddress = null; return }
+        pairStep("waiting")
+        main.postAtTime({
+            if (pairingAddress != d.address) return@postAtTime
+            if (isConnected(d)) { pairStep("done"); pairingAddress = null; return@postAtTime }
+            pairStep("direct", if (connectProfiles(d, true)) "true" else "false")
+        }, PAIR_TOKEN, android.os.SystemClock.uptimeMillis() + 3000)
+        main.postAtTime({
+            if (pairingAddress != d.address) return@postAtTime
+            if (isConnected(d)) pairStep("done") else pairStep("timeout")
+            pairingAddress = null
+        }, PAIR_TOKEN, android.os.SystemClock.uptimeMillis() + 12000)
     }
 
     /** 음악(A2DP) · 통화(HFP) 프로파일 연결 / 해제 — 숨김 API라 막힌 휴대폰에서는 false. */
@@ -223,11 +279,19 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
         @SuppressLint("MissingPermission")
         override fun onReceive(c: Context, i: Intent) {
             when (i.action) {
-                BluetoothDevice.ACTION_FOUND -> {
+                BluetoothDevice.ACTION_FOUND, BluetoothDevice.ACTION_NAME_CHANGED -> {
                     val d: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 33)
                         i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
                     else @Suppress("DEPRECATION") i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    if (d != null) emit(describe(d, safe { d.bondState == BluetoothDevice.BOND_BONDED } ?: false))
+                    @Suppress("DEPRECATION")
+                    val cls: BluetoothClass? = i.getParcelableExtra(BluetoothDevice.EXTRA_CLASS)
+                    // 이름은 방송에 실려 오는 값을 먼저 (이름을 바꾼 에어팟은 바꾼 이름으로)
+                    if (d != null) emit(describe(d, safe { d.bondState == BluetoothDevice.BOND_BONDED } ?: false,
+                        i.getStringExtra(BluetoothDevice.EXTRA_NAME), cls))
+                }
+                Intent.ACTION_SCREEN_ON, Intent.ACTION_SCREEN_OFF -> {
+                    screenOn = i.action == Intent.ACTION_SCREEN_ON
+                    if (bleCallback != null) { stopBle(); startBle() }
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> emit(mapOf("type" to "discoveryDone"))
                 BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
@@ -235,7 +299,13 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
                         i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
                     else @Suppress("DEPRECATION") i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     val st = i.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1)
-                    if (d != null && st == BluetoothDevice.BOND_BONDED) connectProfiles(d, true)
+                    if (d != null && d.address == pairingAddress) {
+                        when (st) {
+                            BluetoothDevice.BOND_BONDING -> pairStep("bonding")
+                            BluetoothDevice.BOND_BONDED -> afterBonded(d)
+                            BluetoothDevice.BOND_NONE -> { pairStep("bondFailed"); pairingAddress = null }
+                        }
+                    }
                     emit(mapOf("type" to "bond", "address" to d?.address, "bonded" to (st == BluetoothDevice.BOND_BONDED),
                         "bonding" to (st == BluetoothDevice.BOND_BONDING)))
                 }
@@ -248,6 +318,23 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
                     @Suppress("DEPRECATION")
                     val args = i.extras?.get(BluetoothHeadset.EXTRA_VENDOR_SPECIFIC_HEADSET_EVENT_ARGS) as? Array<*>
                     appleAccEv(args)?.let { lastBattery = it; emit(state()) }
+                }
+                BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED, BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED -> {
+                    val d: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 33)
+                        i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
+                    else @Suppress("DEPRECATION") i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val st = i.getIntExtra(BluetoothProfile.EXTRA_STATE, -1)
+                    if (d != null && d.address == pairingAddress) {
+                        val music = i.action == BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED
+                        when (st) {
+                            BluetoothProfile.STATE_CONNECTING -> pairStep(if (music) "musicConnecting" else "callConnecting")
+                            BluetoothProfile.STATE_CONNECTED -> {
+                                pairStep(if (music) "musicConnected" else "callConnected")
+                                if (music) { main.removeCallbacksAndMessages(PAIR_TOKEN); pairStep("done"); pairingAddress = null }
+                            }
+                        }
+                    }
+                    main.postDelayed({ emit(state()) }, 300)
                 }
                 else -> main.postDelayed({ emit(state()) }, 300)
             }
@@ -270,6 +357,9 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
         if (receiverOn) return
         val f = IntentFilter().apply {
             addAction(BluetoothDevice.ACTION_FOUND)
+            addAction(BluetoothDevice.ACTION_NAME_CHANGED)
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
@@ -297,13 +387,20 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
         val cb = object : ScanCallback() {
             override fun onScanResult(type: Int, r: ScanResult) {
                 val data = r.scanRecord?.getManufacturerSpecificData(APPLE_ID) ?: return
-                if (r.rssi < -70) return // 내 이어폰만 (가까운 것)
                 emit(mapOf("type" to "ble", "data" to data, "rssi" to r.rssi))
             }
         }
-        val filter = ScanFilter.Builder().setManufacturerData(APPLE_ID, byteArrayOf()).build()
-        val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
-        return try { scanner.startScan(listOf(filter), settings, cb); bleCallback = cb; true } catch (_: Exception) { false }
+        // AOS-Pods 실기기: '회사 ID + 빈 데이터' 필터는 일부 휴대폰에서 아무것도 못 받음 → 화면이 켜져 있으면 필터 없이,
+        // 화면이 꺼지면 안드로이드가 필터 없는 스캔을 멈추므로 그때만 애플 회사 ID 필터 (저전력).
+        return try {
+            if (screenOn) {
+                scanner.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), cb)
+            } else {
+                val filter = ScanFilter.Builder().setManufacturerData(APPLE_ID, byteArrayOf()).build()
+                scanner.startScan(listOf(filter), ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build(), cb)
+            }
+            bleCallback = cb; true
+        } catch (_: Exception) { false }
     }
 
     @SuppressLint("MissingPermission")
@@ -319,9 +416,20 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
         if (aacp != null) return true
         val a = adapter ?: return false
         val d = connectedDevice() ?: return false
+        // 에어팟 정보(0x1D)는 연결 직후 한 번만 와서, 받으면 저장해 두고 다음 연결 때 먼저 보여 줘요.
+        prefs.getString("info_" + d.address, null)?.let { s ->
+            safe { android.util.Base64.decode(s, android.util.Base64.NO_WRAP) }?.let {
+                emit(mapOf("type" to "aacp", "data" to it, "cached" to true))
+            }
+        }
         val client = Aacp(a, d,
             onState = { s, msg -> emit(mapOf("type" to "aacpState", "state" to s, "message" to msg)); if (s != "connected") aacp = null },
-            onPacket = { p -> emit(mapOf("type" to "aacp", "data" to p)) })
+            onPacket = { p ->
+                if (p.size > 6 && p[0].toInt() == 4 && p[2].toInt() == 4 && p[4].toInt() == 0x1D) {
+                    prefs.edit().putString("info_" + d.address, android.util.Base64.encodeToString(p, android.util.Base64.NO_WRAP)).apply()
+                }
+                emit(mapOf("type" to "aacp", "data" to p))
+            })
         aacp = client
         Thread { client.run() }.apply { isDaemon = true; start() }
         return true
@@ -348,6 +456,8 @@ class EarphonePlugin(private val ctx: Context, messenger: BinaryMessenger) :
 
     companion object {
         private const val APPLE_ID = 0x004C
+        private val PAIR_TOKEN = Any()
+        private val PODS = Regex("(?i)airpods|beats|powerbeats|에어팟")
         private const val BluetoothAssignedNumbers_APPLE = 0x004C
         private const val ACTION_BATTERY = "android.bluetooth.device.action.BATTERY_LEVEL_CHANGED"
         private const val EXTRA_BATTERY = "android.bluetooth.device.extra.BATTERY_LEVEL"

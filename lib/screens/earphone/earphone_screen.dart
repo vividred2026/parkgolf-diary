@@ -373,6 +373,7 @@ class PairingSheets {
       builder: (_) => const _PairGuideSheet(),
     );
     if (next != true || !context.mounted) return;
+    ear.clearPairLog();
     await ear.loadBonded();
     await ear.startDiscovery();
     if (!context.mounted) return;
@@ -382,6 +383,126 @@ class PairingSheets {
       builder: (_) => const _DeviceListSheet(),
     );
     await ear.stopDiscovery();
+    if (ear.pairLog.isEmpty || !context.mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const _PairProgressSheet(),
+    );
+  }
+}
+
+/// 이어폰 연결 중 — 페어링 · 음악 · 통화 연결 상태를 시간과 함께 보여 줘요 (AOS-Pods '에어팟 연결 중').
+class _PairProgressSheet extends StatelessWidget {
+  const _PairProgressSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final ear = context.watch<EarphoneService>();
+    String hm(DateTime t) =>
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:${t.second.toString().padLeft(2, '0')}';
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(gutter, 0, gutter, 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SheetHandle(),
+            SheetHeader(
+              ear.pairDone
+                  ? '연결됐어요'
+                  : ear.pairFailed
+                  ? '연결하지 못했어요'
+                  : '이어폰 연결 중',
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    ear.pairingName ?? '',
+                    style: ts(context, 15, w: FontWeight.w700),
+                  ),
+                ),
+                if (!ear.pairDone && !ear.pairFailed)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: c.brandPrimary,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: c.surfaceSubtle,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final l in ear.pairLog)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hm(l.at),
+                            style: ts(context, 12, color: c.textDisabled),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              l.text,
+                              style: ts(
+                                context,
+                                13,
+                                w: l.done || l.failed
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: l.failed
+                                    ? c.danger
+                                    : l.done
+                                    ? c.brandPrimary
+                                    : c.textPrimary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: LineButton(
+                    label: '블루투스 설정',
+                    onPressed: ear.openSettings,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: PrimaryButton(
+                    label: '닫기',
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -417,11 +538,14 @@ class _PairGuideSheet extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              '1  충전 케이스에 이어폰을 넣고 뚜껑을 열어 주세요\n'
-              '2  불빛이 깜빡일 때까지 케이스 버튼을 길게 눌러 주세요\n'
-              '3  [다음]을 누르면 주변 이어폰을 찾아요',
+              '1  충전 케이스에 이어폰을 넣고 뚜껑을 연 채 휴대폰 옆에 두세요\n'
+              '2  상태 표시등이 흰색으로 깜빡일 때까지 케이스 뒷면 설정 버튼을 길게 눌러 주세요 '
+              '(버튼이 없는 에어팟 4는 케이스 앞면 표시등 부근을 두 번 톡톡)\n'
+              '3  깜빡이면 [다음]을 누르고 목록에서 이어폰을 선택하세요',
               style: ts(context, 14, height: 1.6),
             ),
+            const SizedBox(height: 8),
+            const NoteText('이름을 바꾼 에어팟은 바꾼 이름으로 보여요 · 검색은 10초 정도 걸려요'),
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerLeft,
@@ -470,8 +594,10 @@ class _DeviceListSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     final ear = context.watch<EarphoneService>();
-    final list = ear.found.values.where((d) => d.audio).toList()
-      ..sort((a, b) => (b.bonded ? 1 : 0).compareTo(a.bonded ? 1 : 0));
+    // 에어팟 · 비츠 → 오디오 기기, 같은 묶음 안에서는 페어링된 기기 먼저
+    int rank(FoundDevice d) => (d.pods ? 0 : 2) + (d.bonded ? 0 : 1);
+    final list = ear.found.values.where((d) => d.audio || d.pods).toList()
+      ..sort((a, b) => rank(a).compareTo(rank(b)));
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(gutter, 0, gutter, 14),
@@ -539,16 +665,9 @@ class _DeviceListSheet extends StatelessWidget {
                                   : '연결 ›',
                               trailingColor: c.brandPrimary,
                               onTap: () async {
-                                final ok = await ear.pair(d);
-                                if (!context.mounted) return;
-                                if (!ok) {
-                                  toast(
-                                    context,
-                                    '연결하지 못했어요 · 블루투스 설정에서 연결해 주세요',
-                                  );
-                                } else if (d.bonded) {
-                                  Navigator.pop(context);
-                                }
+                                // 목록을 닫고 '이어폰 연결 중' 시트에서 진행 상황을 보여 줘요
+                                Navigator.pop(context);
+                                ear.pair(d);
                               },
                             ),
                         ],
@@ -641,6 +760,10 @@ class EarphoneInfoScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          if (i != null && !ear.infoFresh) ...[
+            const NoteText('마지막으로 받은 정보예요 · 에어팟은 연결 직후에만 정보를 보내요'),
+            const SizedBox(height: 4),
+          ],
           NoteText(
             ear.canRename
                 ? '이름을 바꾸면 휴대폰 블루투스 목록에도 바뀐 이름으로 보여요'

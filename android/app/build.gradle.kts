@@ -29,6 +29,12 @@ android {
         versionName = flutter.versionName
     }
 
+    // 숨김 API 우회 라이브러리를 쓰므로 플레이 스토어용 의존성 정보는 넣지 않아요 (사이드로드 전용, AOS-Pods full 과 같음)
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -46,4 +52,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Apache 2.0 — 블루투스 클래스만 숨김 API 예외 (AACP · 배터리 · 프로파일 연결)
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
 }

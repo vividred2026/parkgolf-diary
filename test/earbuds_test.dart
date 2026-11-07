@@ -162,6 +162,46 @@ void main() {
       expect(ear.listenMode, ListenMode.anc);
     });
 
+    testWidgets('에어팟 연결: 페어링 안내 → 목록(에어팟 먼저) → 연결 중 기록', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(400, 1000));
+      await tester.pumpWidget(
+        ParkGolfDiaryApp(
+          store: store,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => PairingSheets.open(context),
+                child: const Text('열기'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('열기'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('에어팟 4는 케이스 앞면'), findsOneWidget);
+      await tester.tap(find.text('다음'));
+      await tester.pumpAndSettle();
+      final names = tester
+          .widgetList<Text>(find.textContaining('  '))
+          .map((w) => w.data ?? '')
+          .where(
+            (s) =>
+                s.contains('AirPods') ||
+                s.contains('Buds') ||
+                s.contains('JBL'),
+          )
+          .toList();
+      expect(names.first, contains('AirPods Pro'));
+      await tester.tap(find.textContaining('AirPods Pro'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('이어폰 연결 중'), findsOneWidget);
+      expect(find.text('AirPods Pro 선택'), findsOneWidget);
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+      expect(find.text('연결됐어요'), findsOneWidget);
+      expect(find.text('연결 완료 — 잠시 후 배터리가 표시돼요'), findsOneWidget);
+    });
+
     testWidgets('라운드 중 착용 감지 · 배터리 부족', (tester) async {
       await tester.binding.setSurfaceSize(const Size(400, 860));
       final r = store.startRound(
