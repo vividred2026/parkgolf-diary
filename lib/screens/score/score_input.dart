@@ -7,6 +7,9 @@ import '../../logic/voice_parser.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../services/earphone.dart';
+import '../../widgets/library.dart';
+import '../earphone/earphone_screen.dart';
 import '../records/round_complete.dart';
 import 'voice_sheet.dart';
 
@@ -36,6 +39,10 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
 
   AppStore get store => context.read<AppStore>();
 
+  late final EarphoneService _ear = context.read<EarphoneService>();
+  int? _worn;
+  bool _lowShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +50,62 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
     if (r != null) {
       final i = r.mine.indexWhere((h) => h == null);
       hole = i < 0 ? 0 : i;
+    }
+    _worn = _ear.wornCount;
+    _ear.addListener(_onEar);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onEar());
+  }
+
+  @override
+  void dispose() {
+    _ear.removeListener(_onEar);
+    super.dispose();
+  }
+
+  /// EP-09 착용 감지 · EP-10 배터리 부족.
+  void _onEar() {
+    if (!mounted) return;
+    final s = store.settings;
+    final w = _ear.wornCount;
+    if (s.earAutoPause && _worn != null && _worn! > 0 && w == 0) {
+      toast(context, '이어폰을 빼서 음성 입력을 멈췄어요');
+    }
+    _worn = w;
+    final low = _ear.lowestBattery;
+    if (s.earLowBattery &&
+        !_lowShown &&
+        _ear.connected &&
+        low != null &&
+        low <= 20) {
+      _lowShown = true;
+      _lowBattery(low);
+    }
+  }
+
+  Future<void> _lowBattery(int level) async {
+    final useMic = store.settings.earMic && _ear.mic;
+    final phone = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => PopupCard(
+        title: '이어폰 배터리가 $level% 남았어요',
+        description: useMic
+            ? '라운드 중에 꺼질 수 있어요. 휴대폰 마이크로 바꿀까요?'
+            : '라운드 중에 꺼질 수 있어요. 충전 케이스에 넣어 충전해 주세요.',
+        cancelLabel: useMic ? '계속 쓰기' : '닫기',
+        confirmLabel: useMic ? '휴대폰 마이크로' : '이어폰 보기',
+        onCancel: () => Navigator.pop(ctx, false),
+        onConfirm: () => Navigator.pop(ctx, true),
+      ),
+    );
+    if (phone != true || !mounted) return;
+    if (useMic) {
+      store.setEarphone(mic: false);
+      toast(context, '이제 휴대폰 마이크로 들어요');
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const EarphoneScreen()),
+      );
     }
   }
 
@@ -199,6 +262,7 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
       appBar: TopBar(
         title: '스코어 입력',
         actions: [
+          const EarBadge(),
           IconButton(
             tooltip: '라운드 삭제',
             onPressed: () => _menu(r),
@@ -666,6 +730,9 @@ class _MicBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.c;
+    final ear = context.watch<EarphoneService>();
+    final earMic =
+        context.watch<AppStore>().settings.earMic && ear.connected && ear.mic;
     return BoxCard(
       selected: true,
       onTap: onTap,
@@ -688,7 +755,7 @@ class _MicBar extends StatelessWidget {
               children: [
                 Text('눌러서 말하기', style: ts(context, 15, w: FontWeight.w700)),
                 Text(
-                  '휴대폰 마이크 · 예) 그린까지 3, 퍼트 2',
+                  '${earMic ? '이어폰 마이크' : '휴대폰 마이크'} · 예) 그린까지 3, 퍼트 2',
                   style: ts(context, 12, color: c.textSecondary),
                 ),
               ],

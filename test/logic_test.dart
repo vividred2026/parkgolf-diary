@@ -10,10 +10,14 @@ import 'package:parkgolf_diary/logic/stats.dart';
 import 'package:parkgolf_diary/logic/voice_parser.dart';
 import 'package:parkgolf_diary/models/models.dart';
 
-Park samplePark() => Park(id: 'p1', name: '테스트 파크골프장', courses: [
-      Course(name: '아웃코스', pars: [3, 4, 5, 4, 3, 5, 4, 3, 5]),
-      Course(name: '인코스', pars: [4, 3, 5, 3, 4, 5, 3, 4, 5]),
-    ]);
+Park samplePark() => Park(
+  id: 'p1',
+  name: '테스트 파크골프장',
+  courses: [
+    Course(name: '아웃코스', pars: [3, 4, 5, 4, 3, 5, 4, 3, 5]),
+    Course(name: '인코스', pars: [4, 3, 5, 3, 4, 5, 3, 4, 5]),
+  ],
+);
 
 void main() {
   group('규정 3-3-3', () {
@@ -58,26 +62,36 @@ void main() {
       final p = VoiceParser.parse('다섯 타', comps);
       final o = VoiceParser.resolve(p, null);
       expect(o.ask, AskField.putts);
-      final o2 = VoiceParser.resolve(p, null,
-          forcedField: AskField.putts, forcedValue: 2);
+      final o2 = VoiceParser.resolve(
+        p,
+        null,
+        forcedField: AskField.putts,
+        forcedValue: 2,
+      );
       expect(o2.mine, const HoleScore(toGreen: 3, putts: 2));
     });
 
     test('퍼트 숫자가 없으면 되묻기', () {
-      final o =
-          VoiceParser.resolve(VoiceParser.parse('그린까지 3 퍼트', comps), null);
+      final o = VoiceParser.resolve(
+        VoiceParser.parse('그린까지 3 퍼트', comps),
+        null,
+      );
       expect(o.ask, AskField.putts);
     });
 
     test('벌타만 말하면 +2', () {
-      final o = VoiceParser.resolve(VoiceParser.parse('OB', comps),
-          const HoleScore(toGreen: 2, putts: 2));
+      final o = VoiceParser.resolve(
+        VoiceParser.parse('OB', comps),
+        const HoleScore(toGreen: 2, putts: 2),
+      );
       expect(o.mine, const HoleScore(toGreen: 4, putts: 2, penalty: 2));
     });
 
     test('그린까지와 벌타를 함께 말하면 벌타는 포함된 것으로', () {
       final o = VoiceParser.resolve(
-          VoiceParser.parse('그린까지 5 벌타 퍼트 2', comps), null);
+        VoiceParser.parse('그린까지 5 벌타 퍼트 2', comps),
+        null,
+      );
       expect(o.mine, const HoleScore(toGreen: 5, putts: 2, penalty: 2));
     });
 
@@ -107,10 +121,11 @@ void main() {
 
     Round play(DateTime date, int base) {
       final r = store.startRound(
-          park: samplePark(),
-          courseIndexes: [0, 1],
-          companions: ['어피치'],
-          date: date);
+        park: samplePark(),
+        courseIndexes: [0, 1],
+        companions: ['어피치'],
+        date: date,
+      );
       for (var i = 0; i < 18; i++) {
         store.setMine(r, i, HoleScore(toGreen: base, putts: 2));
         store.setOther(r, 0, i, 4);
@@ -146,7 +161,11 @@ void main() {
     test('백업 만들기 → 복원', () async {
       final r = play(DateTime(2026, 10, 18), 3);
       await store.addPhoto(r, Uint8List.fromList([1, 2, 3]), 'jpg');
-      final zip = await Backup.build(store.data, store.storage, DateTime(2026, 10, 19));
+      final zip = await Backup.build(
+        store.data,
+        store.storage,
+        DateTime(2026, 10, 19),
+      );
       final content = Backup.read(zip);
       expect(content.roundCount, 1);
       expect(content.photos.length, 1);
@@ -158,8 +177,10 @@ void main() {
     });
 
     test('백업이 아닌 파일은 거절', () {
-      expect(() => Backup.read(Uint8List.fromList([1, 2, 3])),
-          throwsFormatException);
+      expect(
+        () => Backup.read(Uint8List.fromList([1, 2, 3])),
+        throwsFormatException,
+      );
     });
   });
 }

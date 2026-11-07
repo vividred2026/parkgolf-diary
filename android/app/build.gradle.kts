@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.vividred.parkgolf_diary"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37 // permission_handler 요구
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

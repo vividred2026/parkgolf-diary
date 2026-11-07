@@ -8,6 +8,7 @@ import 'data/park_catalog.dart';
 import 'data/storage.dart';
 import 'models/models.dart';
 import 'screens/onboarding.dart';
+import 'services/earphone.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -18,6 +19,8 @@ Future<void> main() async {
     await Storage.create(),
     await ParkCatalog.load(),
   );
+  // 이어폰 상태 (권한이 이미 있을 때만 바로 연결 상태를 읽어요)
+  EarphoneService.instance.start();
   runApp(ParkGolfDiaryApp(store: store));
 }
 
@@ -31,8 +34,11 @@ class ParkGolfDiaryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: store,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: store),
+        ChangeNotifierProvider.value(value: EarphoneService.instance),
+      ],
       child: Selector<AppStore, AppThemeMode>(
         selector: (_, s) => s.settings.themeMode,
         builder: (context, mode, _) => MaterialApp(

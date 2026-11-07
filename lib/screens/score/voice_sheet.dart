@@ -4,6 +4,11 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../data/app_store.dart';
+import '../../services/earphone.dart';
+
+import 'package:provider/provider.dart';
+
 import '../../logic/rules.dart';
 import '../../logic/voice_parser.dart';
 import '../../models/models.dart';
@@ -54,17 +59,39 @@ class _VoiceSheetState extends State<VoiceSheet> {
 
   int get par => widget.round.pars[widget.hole];
 
+  late final EarphoneService ear = context.read<EarphoneService>();
+  late final bool earMic =
+      context.read<AppStore>().settings.earMic && ear.connected && ear.mic;
+  late final bool autoPause = context.read<AppStore>().settings.earAutoPause;
+  int? _worn;
+
   @override
   void initState() {
     super.initState();
+    _worn = ear.wornCount;
+    ear.addListener(_onEar);
     _start();
   }
 
   @override
   void dispose() {
+    ear.removeListener(_onEar);
     speech.cancel();
+    if (earMic) ear.earMic(false);
     _debugCtl.dispose();
     super.dispose();
+  }
+
+  /// 귀에서 빼면 듣기를 멈추고 닫아요 (EP-09).
+  void _onEar() {
+    final w = ear.wornCount;
+    final removed = autoPause && _worn != null && _worn! > 0 && w == 0;
+    _worn = w;
+    if (removed && mounted && phase == _Phase.listening) {
+      _handled = true;
+      speech.cancel();
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _start() async {
@@ -87,6 +114,8 @@ class _VoiceSheetState extends State<VoiceSheet> {
       });
       return;
     }
+    if (earMic) await ear.earMic(true);
+    if (!mounted) return;
     setState(() => phase = _Phase.listening);
     await speech.listen(
       onResult: (w, isFinal) {
@@ -211,7 +240,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
               style: ts(context, 15, w: FontWeight.w700),
             ),
           ),
-          _micTag(context, '휴대폰 마이크로 듣는 중'),
+          _micTag(context, earMic ? '이어폰 마이크로 듣는 중' : '휴대폰 마이크로 듣는 중'),
         ],
       ),
       const SizedBox(height: 18),
@@ -409,7 +438,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
           Expanded(
             child: Text('이렇게 들었어요', style: ts(context, 20, w: FontWeight.w700)),
           ),
-          _micTag(context, '휴대폰 마이크'),
+          _micTag(context, earMic ? '이어폰 마이크' : '휴대폰 마이크'),
         ],
       ),
       const SizedBox(height: 10),

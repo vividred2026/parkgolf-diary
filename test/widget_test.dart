@@ -33,19 +33,30 @@ class FakeSpeech extends SpeechService {
   Future<void> cancel() async {}
 }
 
-Park park() => Park(id: 'p1', name: '한강 둔치 파크골프장', courses: [
-      Course(name: '아웃코스', pars: [3, 4, 5, 4, 3, 5, 4, 3, 5]),
-      Course(name: '인코스', pars: [4, 3, 5, 3, 4, 5, 3, 4, 5]),
-    ]);
+Park park() => Park(
+  id: 'p1',
+  name: '한강 둔치 파크골프장',
+  courses: [
+    Course(name: '아웃코스', pars: [3, 4, 5, 4, 3, 5, 4, 3, 5]),
+    Course(name: '인코스', pars: [4, 3, 5, 3, 4, 5, 3, 4, 5]),
+  ],
+);
 
 Future<(AppStore, Round)> setup(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(const Size(400, 860));
   final store = await AppStore.open(MemoryStorage(), ParkCatalog([]));
   store.setNickname('라이언');
   final r = store.startRound(
-      park: park(), courseIndexes: [0, 1], companions: ['어피치', '무지']);
-  await tester.pumpWidget(ParkGolfDiaryApp(
-      store: store, home: ScoreInputScreen(roundId: r.id)));
+    park: park(),
+    courseIndexes: [0, 1],
+    companions: ['어피치', '무지'],
+  );
+  await tester.pumpWidget(
+    ParkGolfDiaryApp(
+      store: store,
+      home: ScoreInputScreen(roundId: r.id),
+    ),
+  );
   await tester.pumpAndSettle();
   return (store, r);
 }
@@ -95,8 +106,9 @@ void main() {
     await tester.tap(find.text('눌러서 말하기'));
     await tester.pumpAndSettle();
     expect(find.text('퍼트가 맞나요?'), findsOneWidget);
-    await tester.tap(find.descendant(
-        of: find.byType(BottomSheet), matching: find.text('2')));
+    await tester.tap(
+      find.descendant(of: find.byType(BottomSheet), matching: find.text('2')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('2로 적용'));
     await tester.pumpAndSettle();

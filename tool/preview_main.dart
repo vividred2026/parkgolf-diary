@@ -22,11 +22,17 @@ import 'package:parkgolf_diary/screens/my/backup_screen.dart';
 import 'package:parkgolf_diary/screens/my/trash_screen.dart';
 import 'package:parkgolf_diary/screens/my/score_display.dart';
 import 'package:parkgolf_diary/screens/onboarding.dart';
+import 'package:parkgolf_diary/screens/earphone/earphone_screen.dart';
+import 'package:parkgolf_diary/services/earphone.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final q = Uri.base.queryParameters;
   final store = await AppStore.open(MemoryStorage(), await ParkCatalog.load());
+  if (q['ear'] != '0') {
+    EarphoneService.instance = EarphoneService(demo: true);
+    await EarphoneService.instance.start();
+  }
   store.setNickname('라이언');
   if (q['theme'] == 'dark') store.setThemeMode(AppThemeMode.dark);
   if (q['theme'] == 'light') store.setThemeMode(AppThemeMode.light);
@@ -59,15 +65,19 @@ Future<void> main() async {
     for (final (pi, daysAgo, comp, g) in plan) {
       final p = store.parkById(parks[pi].id)!;
       final r = store.startRound(
-          park: p,
-          courseIndexes: [0, 1],
-          companions: ['어피치', '무지', '프로도'].take(comp).toList(),
-          date: now.subtract(Duration(days: daysAgo, hours: 3)));
+        park: p,
+        courseIndexes: [0, 1],
+        companions: ['어피치', '무지', '프로도'].take(comp).toList(),
+        date: now.subtract(Duration(days: daysAgo, hours: 3)),
+      );
       for (var h = 0; h < 18; h++) {
         final putts = h % 4 == 0 ? 1 : 2;
         final pen = h == 6 ? 2 : 0;
-        store.setMine(r, h,
-            HoleScore(toGreen: g[h % 9] + pen, putts: putts, penalty: pen));
+        store.setMine(
+          r,
+          h,
+          HoleScore(toGreen: g[h % 9] + pen, putts: putts, penalty: pen),
+        );
         for (var k = 0; k < comp; k++) {
           store.setOther(r, k, h, r.pars[h] + ((h + k) % 3 == 0 ? 1 : 0));
         }
@@ -77,10 +87,11 @@ Future<void> main() async {
     }
     last!.memo = '7번 홀 티샷이 계속 오른쪽으로… 다음엔 힘을 빼고. 그린이 빨라서 퍼트 조심.';
     final trashR = store.startRound(
-        park: store.parkById(parks[1].id)!,
-        courseIndexes: [0, 1],
-        companions: [],
-        date: now.subtract(const Duration(days: 30)));
+      park: store.parkById(parks[1].id)!,
+      courseIndexes: [0, 1],
+      companions: [],
+      date: now.subtract(const Duration(days: 30)),
+    );
     for (var h = 0; h < 18; h++) {
       store.setMine(trashR, h, const HoleScore(toGreen: 3, putts: 2));
     }
@@ -89,10 +100,11 @@ Future<void> main() async {
 
     if (const {'score', 'table'}.contains(q['screen'])) {
       playing = store.startRound(
-          park: store.parkById(parks[0].id)!,
-          courseIndexes: [0, 1],
-          companions: ['어피치', '무지', '프로도'],
-          date: now);
+        park: store.parkById(parks[0].id)!,
+        courseIndexes: [0, 1],
+        companions: ['어피치', '무지', '프로도'],
+        date: now,
+      );
       for (var h = 0; h < 6; h++) {
         store.setMine(playing, h, HoleScore(toGreen: 3, putts: h % 2 + 1));
         store.setOther(playing, 0, h, 4);
@@ -116,12 +128,18 @@ Future<void> main() async {
     'search' => const ParkSearchScreen(),
     'add' => const ParkAddScreen(),
     'par' => HoleParScreen(
-        park: Park(id: 'x', name: park.name, builtIn: true, courses: [
+      park: Park(
+        id: 'x',
+        name: park.name,
+        builtIn: true,
+        courses: [
           Course(name: '아웃코스', pars: [3, 4, 5, 4, null, 3, 5, 4, null]),
           Course(name: '인코스'),
-        ]),
-        courseIndexes: const [0, 1],
-        finishLabel: '다음 · 동반자'),
+        ],
+      ),
+      courseIndexes: const [0, 1],
+      finishLabel: '다음 · 동반자',
+    ),
     'companions' => CompanionsScreen(park: park, courseIndexes: const [0, 1]),
     'complete' => RoundCompleteScreen(roundId: last!.id),
     'detail' => RoundDetailScreen(roundId: last!.id),
@@ -130,6 +148,8 @@ Future<void> main() async {
     'backup' => const BackupScreen(),
     'trash' => const TrashScreen(),
     'display' => const ScoreDisplayScreen(),
+    'earphone' => const EarphoneScreen(),
+    'earinfo' => const EarphoneInfoScreen(),
     _ => const MainShell(),
   };
   runApp(ParkGolfDiaryApp(store: store, home: home));

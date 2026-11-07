@@ -248,6 +248,9 @@ class Settings {
     this.themeMode = AppThemeMode.system,
     this.compressPhotos = true,
     this.lastBackupAt,
+    this.earAutoPause = true,
+    this.earLowBattery = true,
+    this.earMic = true,
   });
 
   ScoreDisplay scoreDisplay;
@@ -255,11 +258,23 @@ class Settings {
   bool compressPhotos;
   DateTime? lastBackupAt;
 
+  /// 이어폰을 귀에서 빼면 음성 입력 멈춤.
+  bool earAutoPause;
+
+  /// 이어폰 배터리 20% 이하면 알려 주기.
+  bool earLowBattery;
+
+  /// 연결된 이어폰 마이크로 음성 입력 (끄면 휴대폰 마이크).
+  bool earMic;
+
   Map<String, dynamic> toJson() => {
     'scoreDisplay': scoreDisplay.name,
     'themeMode': themeMode.name,
     'compressPhotos': compressPhotos,
     'lastBackupAt': lastBackupAt?.toIso8601String(),
+    'earAutoPause': earAutoPause,
+    'earLowBattery': earLowBattery,
+    'earMic': earMic,
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -275,6 +290,9 @@ class Settings {
     lastBackupAt: j['lastBackupAt'] == null
         ? null
         : DateTime.parse(j['lastBackupAt'] as String),
+    earAutoPause: (j['earAutoPause'] ?? true) as bool,
+    earLowBattery: (j['earLowBattery'] ?? true) as bool,
+    earMic: (j['earMic'] ?? true) as bool,
   );
 }
 

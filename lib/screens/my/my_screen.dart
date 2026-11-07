@@ -6,6 +6,8 @@ import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../services/earphone.dart';
+import '../earphone/earphone_screen.dart';
 import '../../widgets/library.dart';
 import '../records/records_screen.dart';
 import 'backup_screen.dart';
@@ -138,6 +140,22 @@ class MyScreen extends StatelessWidget {
               ],
             ),
           ),
+        ),
+        const SizedBox(height: 14),
+        RowGroup(
+          children: [
+            ListRow(
+              title: '이어폰',
+              trailing: context.watch<EarphoneService>().connected
+                  ? (context.watch<EarphoneService>().name ?? '연결됨')
+                  : '연결 안 됨',
+              chevron: true,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EarphoneScreen()),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         const SectionLabel('라운드 · 데이터'),

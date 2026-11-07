@@ -79,6 +79,14 @@ class AppStore extends ChangeNotifier {
     _changed();
   }
 
+  void setEarphone({bool? autoPause, bool? lowBattery, bool? mic}) {
+    final s = data.settings;
+    if (autoPause != null) s.earAutoPause = autoPause;
+    if (lowBattery != null) s.earLowBattery = lowBattery;
+    if (mic != null) s.earMic = mic;
+    _changed();
+  }
+
   // ── 파크골프장 ─────────────────────────────
 
   /// 공공데이터 목록 + 직접 추가 · 수정한 파크골프장.
