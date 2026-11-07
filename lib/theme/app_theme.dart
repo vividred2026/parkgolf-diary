@@ -44,46 +44,48 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color danger;
   final Color success;
 
+  // 2027 Friends Screen Library 색 (Color.Primitive / Color.Semantic).
+  // 라이브러리에는 다크 값이 없어 다크는 같은 회색 단계로 만들었어요.
   static const light = AppColors(
-    bgScreen: Color(0xFFFFFFFF),
+    bgScreen: Color(0xFFFFFFFF), // common/white
     surfaceDefault: Color(0xFFFFFFFF),
-    surfaceSubtle: Color(0xFFF5F7FA),
-    surfacePlaceholder: Color(0xFFD9D9D9),
-    surfaceSelected: Color(0xFFF2EFFB),
-    borderDefault: Color(0xFFD1D6DB),
-    textPrimary: Color(0xFF0F1214),
-    textSecondary: Color(0xFF6B7782),
-    textDisabled: Color(0xFFD1D6DB),
-    brandPrimary: Color(0xFF493DE7),
+    surfaceSubtle: Color(0xFFF6F8F9), // gray/50
+    surfacePlaceholder: Color(0xFFD0D7DC), // gray/200
+    surfaceSelected: Color(0xFFE9F8EF), // primary-green/100
+    borderDefault: Color(0xFFECEFF1), // gray/100 (border/primary)
+    textPrimary: Color(0xFF101214), // gray/900 (contents/primary)
+    textSecondary: Color(0xFF6C7883), // gray/500 (contents/secondary)
+    textDisabled: Color(0xFFADB9C2), // gray/300 (contents/tertiary)
+    brandPrimary: Color(0xFF22BB5F), // primary-green/600
     brandOnPrimary: Color(0xFFFFFFFF),
-    inverseBg: Color(0xFF0F1214),
+    inverseBg: Color(0xFF101214),
     inverseText: Color(0xFFFFFFFF),
     warningBg: Color(0xFFFFF8EE),
     warningBorder: Color(0xFFFFD9A8),
     warningText: Color(0xFFB35900),
-    danger: Color(0xFFE5484D),
+    danger: Color(0xFFFA5E4C), // functional/s5 (contents/error)
     success: Color(0xFF22BB5F),
   );
 
   static const dark = AppColors(
-    bgScreen: Color(0xFF111214),
-    surfaceDefault: Color(0xFF1C1D21),
-    surfaceSubtle: Color(0xFF26272D),
-    surfacePlaceholder: Color(0xFF3A3B42),
-    surfaceSelected: Color(0xFF2D2544),
-    borderDefault: Color(0xFF34363D),
-    textPrimary: Color(0xFFF1F2F4),
-    textSecondary: Color(0xFF9BA4AE),
-    textDisabled: Color(0xFF4A4D55),
-    brandPrimary: Color(0xFF928CEE),
+    bgScreen: Color(0xFF101214), // gray/900
+    surfaceDefault: Color(0xFF101214),
+    surfaceSubtle: Color(0xFF272C30), // gray/800
+    surfacePlaceholder: Color(0xFF3E454B), // gray/700
+    surfaceSelected: Color(0xFF272C30), // gray/800
+    borderDefault: Color(0xFF3E454B), // gray/700
+    textPrimary: Color(0xFFF6F8F9), // gray/50
+    textSecondary: Color(0xFFADB9C2), // gray/300
+    textDisabled: Color(0xFF555F67), // gray/600
+    brandPrimary: Color(0xFF22BB5F), // primary-green/600
     brandOnPrimary: Color(0xFFFFFFFF),
-    inverseBg: Color(0xFFF1F2F4),
-    inverseText: Color(0xFF111214),
+    inverseBg: Color(0xFFF6F8F9),
+    inverseText: Color(0xFF101214),
     warningBg: Color(0xFF2E2416),
     warningBorder: Color(0xFF5C4423),
     warningText: Color(0xFFFFB866),
-    danger: Color(0xFFFF6B6F),
-    success: Color(0xFF4CD483),
+    danger: Color(0xFFFA5E4C),
+    success: Color(0xFF22BB5F),
   );
 
   @override

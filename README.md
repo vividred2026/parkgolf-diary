@@ -57,7 +57,7 @@ report/screenList → `RoundListItem` · report/scorecard → `PersonalScorecard
 
 ## 색 (Figma Theme 변수)
 
-`lib/theme/app_theme.dart` — Light / Dark 두 모드. brand/primary 라이트 `#493DE7`, 다크 `#928CEE`.
+`lib/theme/app_theme.dart` — 2027 Friends Screen Library 색. brand/primary `#22BB5F`(primary-green/600), 회색은 gray/50~900, 에러 `#FA5E4C`. 라이브러리에 다크 값이 없어 다크는 같은 회색 단계로 만들었어요.
 글꼴은 Pretendard (SIL OFL, `assets/fonts/`).
 
 ## 파크골프장 목록
