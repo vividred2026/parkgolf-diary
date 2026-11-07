@@ -112,6 +112,78 @@ void main() {
     });
   });
 
+  group('음성 해석 — 골프 표현', () {
+    const comps = ['어피치', '무지'];
+    HoleScore? mine(String s, {int? par}) =>
+        VoiceParser.resolve(VoiceParser.parse(s, comps), null, par: par).mine;
+
+    test('쓰리온 투퍼트 · 투펏 · 붙여 말하기', () {
+      for (final s in [
+        '쓰리온 투퍼트',
+        '쓰리온 투펏',
+        '쓰리온투펏',
+        '3온 2퍼트',
+        '3 온 2 퍼트',
+        '3on 2putt',
+        'three on two putt',
+        '스리온 투 퍼트',
+        '세 온 두 퍼트',
+      ]) {
+        expect(mine(s), const HoleScore(toGreen: 3, putts: 2), reason: s);
+      }
+    });
+
+    test('투온 원펏 · 포온 쓰리퍼트', () {
+      expect(mine('투온 원펏'), const HoleScore(toGreen: 2, putts: 1));
+      expect(mine('포온 쓰리퍼트'), const HoleScore(toGreen: 4, putts: 3));
+    });
+
+    test('기존 표현과 섞어도 돼요', () {
+      expect(mine('그린까지 3 투퍼트'), const HoleScore(toGreen: 3, putts: 2));
+      expect(mine('5타 2퍼트'), const HoleScore(toGreen: 3, putts: 2));
+      expect(mine('쓰리온 퍼트 2'), const HoleScore(toGreen: 3, putts: 2));
+    });
+
+    test('동반자 · 오비와 함께', () {
+      final p = VoiceParser.parse('쓰리온 투퍼트 어피치 4 무지 다섯', comps);
+      final o = VoiceParser.resolve(p, null);
+      expect(o.mine, const HoleScore(toGreen: 3, putts: 2));
+      expect(o.others, {0: 4, 1: 5});
+      expect(
+        mine('오비 쓰리온 투퍼트'),
+        const HoleScore(toGreen: 3, putts: 2, penalty: 2),
+      );
+    });
+
+    test('쓰리온만 말하면 퍼트를 되물어요', () {
+      final o = VoiceParser.resolve(VoiceParser.parse('쓰리온', comps), null);
+      expect(o.ask, AskField.putts);
+    });
+
+    test('홀인원 · 칩인', () {
+      expect(mine('홀인원'), const HoleScore(toGreen: 1, putts: 0));
+      expect(mine('쓰리온 칩인'), const HoleScore(toGreen: 3, putts: 0));
+    });
+
+    test('파 대비: 보기 투퍼트 · 파 · 어피치 버디', () {
+      expect(mine('보기 투퍼트', par: 4), const HoleScore(toGreen: 3, putts: 2));
+      expect(mine('파 원퍼트', par: 3), const HoleScore(toGreen: 2, putts: 1));
+      final o = VoiceParser.resolve(
+        VoiceParser.parse('쓰리온 투퍼트 어피치 버디', comps),
+        null,
+        par: 4,
+      );
+      expect(o.others, {0: 3});
+      // 퍼트를 모르면 되물어요
+      final a = VoiceParser.resolve(
+        VoiceParser.parse('파', comps),
+        null,
+        par: 4,
+      );
+      expect(a.ask, AskField.putts);
+    });
+  });
+
   group('저장 · 통계 · 백업', () {
     late AppStore store;
     setUp(() async {

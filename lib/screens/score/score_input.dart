@@ -755,7 +755,7 @@ class _MicBar extends StatelessWidget {
               children: [
                 Text('눌러서 말하기', style: ts(context, 15, w: FontWeight.w700)),
                 Text(
-                  '${earMic ? '이어폰 마이크' : '휴대폰 마이크'} · 예) 그린까지 3, 퍼트 2',
+                  '${earMic ? '이어폰 마이크' : '휴대폰 마이크'} · 예) 쓰리온 투퍼트',
                   style: ts(context, 12, color: c.textSecondary),
                 ),
               ],

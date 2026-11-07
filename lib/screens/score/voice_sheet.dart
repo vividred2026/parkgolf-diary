@@ -52,6 +52,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
   String? failReason;
   final List<double> levels = List.filled(13, 0.15);
   VoiceParse? parsed;
+  List<String> alternates = const [];
   VoiceOutcome? outcome;
   int? askPick;
   bool _handled = false;
@@ -99,6 +100,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
       phase = _Phase.starting;
       words = '';
       parsed = null;
+      alternates = const [];
       outcome = null;
       askPick = null;
       _handled = false;
@@ -118,9 +120,12 @@ class _VoiceSheetState extends State<VoiceSheet> {
     if (!mounted) return;
     setState(() => phase = _Phase.listening);
     await speech.listen(
-      onResult: (w, isFinal) {
+      onResult: (w, isFinal, alts) {
         if (!mounted) return;
-        setState(() => words = w);
+        setState(() {
+          words = w;
+          alternates = alts;
+        });
         if (isFinal) _handle(w);
       },
       onLevel: (l) {
@@ -147,7 +152,16 @@ class _VoiceSheetState extends State<VoiceSheet> {
     if (_handled) return;
     _handled = true;
     speech.stop();
-    final p = VoiceParser.parse(text, widget.round.companions);
+    // 첫 후보를 못 알아들으면 인식기가 준 다른 후보로 다시 해석해요.
+    var p = VoiceParser.parse(text, widget.round.companions);
+    for (final a in alternates) {
+      if (!p.isEmpty) break;
+      final q = VoiceParser.parse(a, widget.round.companions);
+      if (!q.isEmpty) {
+        p = q;
+        words = a;
+      }
+    }
     if (p.isEmpty) {
       setState(() {
         phase = _Phase.fail;
@@ -159,7 +173,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
       Navigator.pop(context, VoiceSheetResult.command(p.command));
       return;
     }
-    final o = VoiceParser.resolve(p, widget.round.mine[widget.hole]);
+    final o = VoiceParser.resolve(p, widget.round.mine[widget.hole], par: par);
     setState(() {
       parsed = p;
       outcome = o;
@@ -175,6 +189,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
       o = VoiceParser.resolve(
         parsed!,
         widget.round.mine[widget.hole],
+        par: par,
         forcedField: o.ask,
         forcedValue: askPick,
       );
@@ -309,7 +324,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          words.isEmpty ? '"그린까지 3, 퍼트 2…"' : '"$words"',
+          words.isEmpty ? '"쓰리온 투퍼트…"' : '"$words"',
           textAlign: TextAlign.center,
           style: ts(
             context,
@@ -321,7 +336,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
       ),
       const SizedBox(height: 10),
       Text(
-        '예) 그린까지 3, 퍼트 2 · 5타 퍼트 2 · ${widget.round.companions.isEmpty ? '' : '${widget.round.companions.first} 4 · '}벌타\n'
+        '예) 쓰리온 투퍼트 · 3온 2퍼트 · 보기 투펏 · ${widget.round.companions.isEmpty ? '' : '${widget.round.companions.first} 4 · '}오비\n'
         '말이 끝나면 자동으로 멈춰요. 마이크를 누르면 바로 끝나요.',
         textAlign: TextAlign.center,
         style: ts(context, 12, color: c.textSecondary, height: 1.4),
@@ -619,7 +634,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
       const SizedBox(height: 12),
       Center(
         child: Text(
-          '예) 그린까지 3, 퍼트 2 · 5타 퍼트 2',
+          '예) 쓰리온 투퍼트 · 3온 2퍼트 · 5타 2퍼트',
           style: ts(context, 12, color: c.textSecondary),
         ),
       ),

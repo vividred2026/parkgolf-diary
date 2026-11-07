@@ -18,13 +18,15 @@ class FakeSpeech extends SpeechService {
 
   @override
   Future<void> listen({
-    required void Function(String words, bool isFinal) onResult,
+    required void Function(String words, bool isFinal, List<String> alternates)
+    onResult,
     required void Function(double level) onLevel,
     required void Function(String status) onStatus,
     required void Function(String message) onError,
   }) async {
     final w = says.removeAt(0);
-    Future.microtask(() => onResult(w, true));
+    final parts = w.split('|'); // '첫 후보|다른 후보'
+    Future.microtask(() => onResult(parts.first, true, parts.skip(1).toList()));
   }
 
   @override
@@ -98,6 +100,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(r.mine[0], isNull);
     expect(r.others[0][0], isNull);
+  });
+
+  testWidgets('음성: 쓰리온 투퍼트 · 다른 후보로 알아듣기', (tester) async {
+    SpeechService.instance = FakeSpeech(['음 글쎄|쓰리온 투퍼트']);
+    final (_, r) = await setup(tester);
+    await tester.tap(find.text('눌러서 말하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('이렇게 들었어요'), findsOneWidget);
+    await tester.tap(find.text('적용'));
+    await tester.pumpAndSettle();
+    expect(r.mine[0], const HoleScore(toGreen: 3, putts: 2));
   });
 
   testWidgets('음성: 퍼트가 애매하면 되묻기', (tester) async {

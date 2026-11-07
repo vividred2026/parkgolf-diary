@@ -3,9 +3,12 @@ import 'rules.dart';
 
 /// 음성 명령 해석.
 ///
-/// 지원하는 말:
+/// 지원하는 말 (골프에서 실제로 쓰는 표현):
+/// - "쓰리온 투퍼트" / "3온 2퍼트" / "쓰리온 투펏" / "three on two putt"
 /// - "그린까지 3, 퍼트 2"
-/// - "5타, 퍼트 2"      → 그린까지 = 5 − 2
+/// - "5타, 2퍼트"       → 그린까지 = 5 − 2
+/// - "보기 투퍼트" / "파" / "버디" → 파 대비 타수 (퍼트를 모르면 되물어요)
+/// - "홀인원" → 1온 0퍼트, "칩인" / "노퍼트" → 0퍼트
 /// - "벌타" / "OB" / "오비" / "분실구" / "언플레이어블" → 벌타 +2
 /// - "어피치 4"          → 동반자 총 타수
 /// - "나 5" / "내 5"     → 내 총 타수 (퍼트를 되물어요)
@@ -21,9 +24,12 @@ class VoiceParse {
     this.penaltyCount = 0,
     this.mentionedGreen = false,
     this.mentionedPutts = false,
+    this.overPar,
     Map<int, int>? others,
+    Map<int, int>? othersOverPar,
     this.command,
-  }) : others = others ?? {};
+  }) : others = others ?? {},
+       othersOverPar = othersOverPar ?? {};
 
   final String heard;
   final int? toGreen;
@@ -33,19 +39,27 @@ class VoiceParse {
   final bool mentionedGreen;
   final bool mentionedPutts;
 
+  /// "파" · "보기" · "버디" 처럼 파 대비로 말한 타수.
+  final int? overPar;
+
   /// 동반자 순서 → 총 타수.
   final Map<int, int> others;
+
+  /// 동반자 순서 → 파 대비 ("어피치 보기").
+  final Map<int, int> othersOverPar;
   final VoiceCommand? command;
 
   bool get aboutMe =>
       toGreen != null ||
       putts != null ||
       total != null ||
+      overPar != null ||
       penaltyCount > 0 ||
       mentionedGreen ||
       mentionedPutts;
 
-  bool get isEmpty => !aboutMe && others.isEmpty && command == null;
+  bool get isEmpty =>
+      !aboutMe && others.isEmpty && othersOverPar.isEmpty && command == null;
 }
 
 /// 확인이 더 필요한 항목.
@@ -91,7 +105,58 @@ class VoiceParser {
     '이': 2,
     '영': 0,
     '공': 0,
+    // 골프장에서 많이 쓰는 영어 숫자 (쓰리온 · 투퍼트)
+    '원': 1,
+    '투': 2,
+    '쓰리': 3,
+    '스리': 3,
+    '뜨리': 3,
+    '포': 4,
+    '파이브': 5,
+    '식스': 6,
+    '세븐': 7,
+    '에잇': 8,
+    '나인': 9,
+    '텐': 10,
+    'one': 1,
+    'two': 2,
+    'to': 2,
+    'too': 2,
+    'three': 3,
+    'tree': 3,
+    'four': 4,
+    'for': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9,
+    'ten': 10,
   };
+
+  /// 파 대비 이름 → 타수 차이.
+  static const _terms = <String, int>{
+    '알바트로스': -3,
+    '이글': -2,
+    '버디': -1,
+    '파세이브': 0,
+    '파': 0,
+    '보기': 1,
+    '더블보기': 2,
+    '더블': 2,
+    '트리플보기': 3,
+    '트리플': 3,
+    'birdie': -1,
+    'eagle': -2,
+    'par': 0,
+    'bogey': 1,
+    'double': 2,
+    'triple': 3,
+  };
+  static final String _term =
+      '(${(_terms.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|')})';
+  static const _termEnd = r'(?=\s|$|,|투|원|쓰리|\d)';
+  static const _puttWord = r'(?:퍼트|퍼팅|펏트|펏|퍼터|버트|퍼드|putts|putt|put)';
 
   static final String _num =
       '(\\d{1,2}|${(_numWords.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|')})';
@@ -130,20 +195,60 @@ class VoiceParser {
       return v;
     }
 
-    // 동반자 (이름이 숫자 단어를 포함할 수 있어 먼저 처리)
-    final others = <int, int>{};
-    for (var k = 0; k < companions.length; k++) {
-      final name = RegExp.escape(companions[k].toLowerCase());
-      final v = take(RegExp('$name\\s*(?:은|는|이|가)?\\s*$_num$_end'));
-      if (v != null) others[k] = v;
+    int? termOf(String s) => _terms[s.replaceAll(' ', '')];
+
+    // 홀인원 · 칩인 (숫자 '원'보다 먼저)
+    int? toGreen, putts;
+    if (RegExp(r'홀\s*인\s*원|hole\s*in\s*one|에이스').hasMatch(t)) {
+      toGreen = 1;
+      putts = 0;
+      t = t.replaceAll(RegExp(r'홀\s*인\s*원|hole\s*in\s*one|에이스'), ' ');
+    }
+    if (RegExp(r'칩\s*인|노\s*퍼트|노\s*펏|노\s*퍼팅|chip\s*in').hasMatch(t)) {
+      putts = 0;
+      t = t.replaceAll(RegExp(r'칩\s*인|노\s*퍼트|노\s*펏|노\s*퍼팅|chip\s*in'), ' ');
     }
 
+    // 동반자 (이름이 숫자 단어를 포함할 수 있어 먼저 처리)
+    final others = <int, int>{};
+    final othersOverPar = <int, int>{};
+    for (var k = 0; k < companions.length; k++) {
+      final name = RegExp.escape(companions[k].toLowerCase());
+      final v = take(RegExp('$name\\s*(?:은|는|이|가)?\\s*$_num\\s*타?$_end'));
+      if (v != null) {
+        others[k] = v;
+        continue;
+      }
+      final m = RegExp('$name\\s*(?:은|는|이|가)?\\s*$_term$_termEnd')
+          .firstMatch(t);
+      if (m != null) {
+        othersOverPar[k] = termOf(m.group(1)!)!;
+        t = t.replaceRange(m.start, m.end, ' ');
+      }
+    }
+
+    // 1) "그린까지 3" · "퍼트 2" 처럼 단어 뒤에 숫자 (뒤에 온 · 퍼트 · 타가 오면 다음 말의 숫자예요)
+    final notNext = '(?!\\s*(?:온|on\\b|타|$_puttWord))';
     final mentionedGreen = t.contains('그린');
-    final toGreen = take(RegExp('그린\\s*(?:까지)?\\s*(?:은|는)?\\s*$_num$_end'));
-    final mentionedPutts = RegExp('퍼트|퍼팅|퍼터|버트').hasMatch(t);
-    final putts = take(RegExp('(?:퍼트|퍼팅|퍼터|버트)\\s*(?:는|은)?\\s*$_num$_end'));
+    toGreen ??= take(
+      RegExp('그린\\s*(?:까지)?\\s*(?:은|는)?\\s*$_num(?!\\s*(?:온|on\\b))$_end'),
+    );
+    putts ??= take(RegExp('$_puttWord\\s*(?:는|은)?\\s*$_num$notNext$_end'));
+    // 2) "쓰리온" · "3온" · "3 on"
+    toGreen ??= take(RegExp('$_num\\s*(?:온|on\\b)'));
+    // 3) "투퍼트" · "2퍼트" · "투펏" · "two putt"
+    putts ??= take(RegExp('$_num\\s*$_puttWord'));
+    final mentionedPutts = RegExp(_puttWord).hasMatch(t);
     var total = take(RegExp('(?:^|\\s)(?:나|내|저|제)\\s*(?:는)?\\s*$_num$_end'));
     total ??= take(RegExp('(?:^|\\s)$_num\\s*타(?=\\s|\$|,)'));
+
+    // "보기" · "파" · "버디"
+    int? overPar;
+    final tm = RegExp('(?:^|\\s)$_term$_termEnd').firstMatch(t);
+    if (tm != null) {
+      overPar = termOf(tm.group(1)!);
+      t = t.replaceRange(tm.start, tm.end, ' ');
+    }
 
     return VoiceParse(
       heard: raw.trim(),
@@ -151,9 +256,11 @@ class VoiceParser {
       putts: putts,
       total: total,
       penaltyCount: penaltyCount,
-      mentionedGreen: mentionedGreen,
-      mentionedPutts: mentionedPutts,
+      mentionedGreen: mentionedGreen && toGreen == null,
+      mentionedPutts: mentionedPutts && putts == null,
+      overPar: overPar,
       others: others,
+      othersOverPar: othersOverPar,
       command: command,
     );
   }
@@ -163,9 +270,30 @@ class VoiceParser {
   static VoiceOutcome resolve(
     VoiceParse p,
     HoleScore? current, {
+    int? par,
     AskField? forcedField,
     int? forcedValue,
   }) {
+    final others = {
+      ...p.others,
+      if (par != null)
+        for (final e in p.othersOverPar.entries)
+          e.key: (par + e.value).clamp(1, 30),
+    };
+    p = VoiceParse(
+      heard: p.heard,
+      toGreen: p.toGreen,
+      putts: p.putts,
+      total:
+          p.total ??
+          (par != null && p.overPar != null ? par + p.overPar! : null),
+      penaltyCount: p.penaltyCount,
+      mentionedGreen: p.mentionedGreen,
+      mentionedPutts: p.mentionedPutts,
+      overPar: p.overPar,
+      others: others,
+      command: p.command,
+    );
     if (!p.aboutMe) return VoiceOutcome(others: p.others);
 
     int? putts = p.putts;
@@ -206,7 +334,7 @@ class VoiceParser {
       return VoiceOutcome(
         others: p.others,
         ask: AskField.toGreen,
-        askReason: '그린까지 숫자가 확실하지 않아요',
+        askReason: '몇 온인지 확실하지 않아요',
       );
     }
     if (p.mentionedPutts && putts == null) {
@@ -223,7 +351,7 @@ class VoiceParser {
       return VoiceOutcome(
         others: p.others,
         ask: AskField.toGreen,
-        askReason: '그린까지 몇 타였는지 알려 주세요',
+        askReason: '몇 온이었는지 알려 주세요',
       );
     }
     if (putts == null) {
