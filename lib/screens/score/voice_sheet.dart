@@ -81,7 +81,8 @@ class _VoiceSheetState extends State<VoiceSheet> {
     if (!ok) {
       setState(() {
         phase = _Phase.fail;
-        failReason = '마이크 · 음성 인식 권한이 꺼져 있거나 이 기기에서 음성 인식을 쓸 수 없어요. '
+        failReason =
+            '마이크 · 음성 인식 권한이 꺼져 있거나 이 기기에서 음성 인식을 쓸 수 없어요. '
             '설정에서 권한을 켜거나 버튼으로 입력해 주세요.';
       });
       return;
@@ -142,8 +143,12 @@ class _VoiceSheetState extends State<VoiceSheet> {
     var o = outcome!;
     if (phase == _Phase.ask) {
       if (askPick == null) return;
-      o = VoiceParser.resolve(parsed!, widget.round.mine[widget.hole],
-          forcedField: o.ask, forcedValue: askPick);
+      o = VoiceParser.resolve(
+        parsed!,
+        widget.round.mine[widget.hole],
+        forcedField: o.ask,
+        forcedValue: askPick,
+      );
       if (o.needsAsk) {
         setState(() {
           outcome = o;
@@ -159,7 +164,11 @@ class _VoiceSheetState extends State<VoiceSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          gutter, 0, gutter, MediaQuery.viewInsetsOf(context).bottom + 14),
+        gutter,
+        0,
+        gutter,
+        MediaQuery.viewInsetsOf(context).bottom + 14,
+      ),
       child: SafeArea(
         child: AnimatedSize(
           duration: const Duration(milliseconds: 180),
@@ -182,22 +191,29 @@ class _VoiceSheetState extends State<VoiceSheet> {
   }
 
   Widget _micTag(BuildContext context, String text) => Align(
-        alignment: Alignment.centerRight,
-        child: Tag(text, color: context.c.brandPrimary),
-      );
+    alignment: Alignment.centerRight,
+    child: Tag(text, color: context.c.brandPrimary),
+  );
 
-  Widget _quote(BuildContext context, String text) => Text('"$text"',
-      style: ts(context, 14, color: context.c.textSecondary, height: 1.4));
+  Widget _quote(BuildContext context, String text) => Text(
+    '"$text"',
+    style: ts(context, 14, color: context.c.textSecondary, height: 1.4),
+  );
 
   List<Widget> _listening(BuildContext context) {
     final c = context.c;
     return [
-      Row(children: [
-        Expanded(
-            child: Text('${widget.hole + 1}H · PAR $par',
-                style: ts(context, 15, w: FontWeight.w700))),
-        _micTag(context, '휴대폰 마이크로 듣는 중'),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${widget.hole + 1}H · PAR $par',
+              style: ts(context, 15, w: FontWeight.w700),
+            ),
+          ),
+          _micTag(context, '휴대폰 마이크로 듣는 중'),
+        ],
+      ),
       const SizedBox(height: 18),
       Center(
         child: GestureDetector(
@@ -205,24 +221,33 @@ class _VoiceSheetState extends State<VoiceSheet> {
           child: Container(
             width: 120,
             height: 120,
-            decoration:
-                BoxDecoration(shape: BoxShape.circle, color: c.surfaceSelected),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: c.surfaceSelected,
+            ),
             alignment: Alignment.center,
             child: Container(
               width: 80,
               height: 80,
-              decoration:
-                  BoxDecoration(shape: BoxShape.circle, color: c.brandPrimary),
-              child: Icon(Icons.mic_none_rounded,
-                  size: 36, color: c.brandOnPrimary),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: c.brandPrimary,
+              ),
+              child: Icon(
+                Icons.mic_none_rounded,
+                size: 36,
+                color: c.brandOnPrimary,
+              ),
             ),
           ),
         ),
       ),
       const SizedBox(height: 16),
       Center(
-        child: Text(phase == _Phase.starting ? '준비 중…' : '듣고 있어요',
-            style: ts(context, 20, w: FontWeight.w700)),
+        child: Text(
+          phase == _Phase.starting ? '준비 중…' : '듣고 있어요',
+          style: ts(context, 20, w: FontWeight.w700),
+        ),
       ),
       const SizedBox(height: 12),
       SizedBox(
@@ -235,12 +260,14 @@ class _VoiceSheetState extends State<VoiceSheet> {
                 duration: const Duration(milliseconds: 120),
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 width: 4,
-                height: 36 *
+                height:
+                    36 *
                     levels[i] *
                     (0.6 + 0.4 * math.sin((i + 1) / levels.length * math.pi)),
                 decoration: BoxDecoration(
-                    color: c.brandPrimary,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: c.brandPrimary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
           ],
         ),
@@ -249,49 +276,67 @@ class _VoiceSheetState extends State<VoiceSheet> {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-            color: c.surfaceSubtle, borderRadius: BorderRadius.circular(12)),
-        child: Text(words.isEmpty ? '"그린까지 3, 퍼트 2…"' : '"$words"',
-            textAlign: TextAlign.center,
-            style: ts(context, 15,
-                w: FontWeight.w500,
-                color: words.isEmpty ? c.textSecondary : c.textPrimary)),
+          color: c.surfaceSubtle,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          words.isEmpty ? '"그린까지 3, 퍼트 2…"' : '"$words"',
+          textAlign: TextAlign.center,
+          style: ts(
+            context,
+            15,
+            w: FontWeight.w500,
+            color: words.isEmpty ? c.textSecondary : c.textPrimary,
+          ),
+        ),
       ),
       const SizedBox(height: 10),
       Text(
-          '예) 그린까지 3, 퍼트 2 · 5타 퍼트 2 · ${widget.round.companions.isEmpty ? '' : '${widget.round.companions.first} 4 · '}벌타\n'
-          '말이 끝나면 자동으로 멈춰요. 마이크를 누르면 바로 끝나요.',
-          textAlign: TextAlign.center,
-          style: ts(context, 12, color: c.textSecondary, height: 1.4)),
+        '예) 그린까지 3, 퍼트 2 · 5타 퍼트 2 · ${widget.round.companions.isEmpty ? '' : '${widget.round.companions.first} 4 · '}벌타\n'
+        '말이 끝나면 자동으로 멈춰요. 마이크를 누르면 바로 끝나요.',
+        textAlign: TextAlign.center,
+        style: ts(context, 12, color: c.textSecondary, height: 1.4),
+      ),
       if (kDebugMode) _debugInput(context),
       const SizedBox(height: 16),
-      Row(children: [
-        Expanded(
+      Row(
+        children: [
+          Expanded(
             child: LineButton(
-                label: '취소', onPressed: () => Navigator.pop(context))),
-        const SizedBox(width: 8),
-        Expanded(
+              label: '취소',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
             child: PrimaryButton(
-                label: '직접 입력', onPressed: () => Navigator.pop(context))),
-      ]),
+              label: '직접 입력',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
     ];
   }
 
   /// 개발용: 음성 대신 글자로 넣어 보기 (디버그 빌드에서만 보여요).
   Widget _debugInput(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: TextField(
-          controller: _debugCtl,
-          style: ts(context, 13),
-          decoration: const InputDecoration(
-              isDense: true, hintText: '(개발용) 말한 내용을 글자로 입력'),
-          onSubmitted: (v) {
-            _handled = false;
-            speech.cancel();
-            setState(() => words = v);
-            _handle(v);
-          },
-        ),
-      );
+    padding: const EdgeInsets.only(top: 10),
+    child: TextField(
+      controller: _debugCtl,
+      style: ts(context, 13),
+      decoration: const InputDecoration(
+        isDense: true,
+        hintText: '(개발용) 말한 내용을 글자로 입력',
+      ),
+      onSubmitted: (v) {
+        _handled = false;
+        speech.cancel();
+        setState(() => words = v);
+        _handle(v);
+      },
+    ),
+  );
 
   Widget _summary(BuildContext context, VoiceOutcome o) {
     final c = context.c;
@@ -299,32 +344,54 @@ class _VoiceSheetState extends State<VoiceSheet> {
     final rows = <Widget>[];
     final m = o.mine;
     if (m != null) {
-      rows.add(Row(children: [
-        Text('나 · ${widget.hole + 1}H',
-            style: ts(context, 13, color: c.textSecondary)),
-        const Spacer(),
-        Text(
-            '그린까지 ${m.toGreen}${m.penalty > 0 ? ' (벌타 ${m.penalty})' : ''} · 퍼트 ${m.putts}',
-            style: ts(context, 15, w: FontWeight.w700)),
-      ]));
-      rows.add(Align(
-        alignment: Alignment.centerRight,
-        child: Text('총 ${m.total}타 · ${_rel(m.total)}',
-            style: ts(context, 17, w: FontWeight.w700, color: c.brandPrimary)),
-      ));
+      rows.add(
+        Row(
+          children: [
+            Text(
+              '나 · ${widget.hole + 1}H',
+              style: ts(context, 13, color: c.textSecondary),
+            ),
+            const Spacer(),
+            Text(
+              '그린까지 ${m.toGreen}${m.penalty > 0 ? ' (벌타 ${m.penalty})' : ''} · 퍼트 ${m.putts}',
+              style: ts(context, 15, w: FontWeight.w700),
+            ),
+          ],
+        ),
+      );
+      rows.add(
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            '총 ${m.total}타 · ${_rel(m.total)}',
+            style: ts(context, 17, w: FontWeight.w700, color: c.brandPrimary),
+          ),
+        ),
+      );
     }
     for (final e in o.others.entries) {
       rows.add(const SizedBox(height: 8));
-      rows.add(Row(children: [
-        Text(r.companions[e.key],
-            style: ts(context, 13, color: c.textSecondary)),
-        const Spacer(),
-        Text('총 ${e.value}타 · ${Rules.termFor(e.value, par)}',
-            style: ts(context, 15, w: FontWeight.w700)),
-      ]));
+      rows.add(
+        Row(
+          children: [
+            Text(
+              r.companions[e.key],
+              style: ts(context, 13, color: c.textSecondary),
+            ),
+            const Spacer(),
+            Text(
+              '총 ${e.value}타 · ${Rules.termFor(e.value, par)}',
+              style: ts(context, 15, w: FontWeight.w700),
+            ),
+          ],
+        ),
+      );
     }
-    return BoxCard(selected: true, padding: const EdgeInsets.all(16),
-        child: Column(children: rows));
+    return BoxCard(
+      selected: true,
+      padding: const EdgeInsets.all(16),
+      child: Column(children: rows),
+    );
   }
 
   String _rel(int total) {
@@ -337,12 +404,14 @@ class _VoiceSheetState extends State<VoiceSheet> {
   List<Widget> _result(BuildContext context) {
     final c = context.c;
     return [
-      Row(children: [
-        Expanded(
-            child: Text('이렇게 들었어요',
-                style: ts(context, 20, w: FontWeight.w700))),
-        _micTag(context, '휴대폰 마이크'),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: Text('이렇게 들었어요', style: ts(context, 20, w: FontWeight.w700)),
+          ),
+          _micTag(context, '휴대폰 마이크'),
+        ],
+      ),
       const SizedBox(height: 10),
       _quote(context, parsed!.heard),
       const SizedBox(height: 14),
@@ -351,22 +420,36 @@ class _VoiceSheetState extends State<VoiceSheet> {
       Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-            color: c.surfaceSubtle, borderRadius: BorderRadius.circular(10)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('화면을 확인하고 "적용"을 탭하세요',
-              style:
-                  ts(context, 13, w: FontWeight.w700, color: c.brandPrimary)),
-          const SizedBox(height: 2),
-          Text('틀렸다면 "다시 말하기"를 누르세요. 자동으로 반영하지 않아요.',
-              style: ts(context, 12, color: c.textSecondary)),
-        ]),
+          color: c.surfaceSubtle,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '화면을 확인하고 "적용"을 탭하세요',
+              style: ts(context, 13, w: FontWeight.w700, color: c.brandPrimary),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '틀렸다면 "다시 말하기"를 누르세요. 자동으로 반영하지 않아요.',
+              style: ts(context, 12, color: c.textSecondary),
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: 16),
-      Row(children: [
-        Expanded(child: LineButton(label: '다시 말하기', onPressed: _start)),
-        const SizedBox(width: 8),
-        Expanded(child: PrimaryButton(label: '적용', onPressed: _apply)),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: LineButton(label: '다시 말하기', onPressed: _start),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: PrimaryButton(label: '적용', onPressed: _apply),
+          ),
+        ],
+      ),
     ];
   }
 
@@ -378,69 +461,101 @@ class _VoiceSheetState extends State<VoiceSheet> {
     final options = isPutts ? [0, 1, 2, 3] : [1, 2, 3, 4, 5, 6];
     final p = parsed!;
     final known = isPutts ? p.toGreen ?? p.total : p.putts;
-    final knownLabel = isPutts
-        ? (p.toGreen != null ? '그린까지' : '총 타수')
-        : '퍼트';
+    final knownLabel = isPutts ? (p.toGreen != null ? '그린까지' : '총 타수') : '퍼트';
     return [
-      Row(children: [
-        Expanded(
-            child: Text('$field가 맞나요?',
-                style: ts(context, 20, w: FontWeight.w700))),
-        _micTag(context, '확인 필요'),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$field가 맞나요?',
+              style: ts(context, 20, w: FontWeight.w700),
+            ),
+          ),
+          _micTag(context, '확인 필요'),
+        ],
+      ),
       const SizedBox(height: 10),
-      Text('"${p.heard}" — ${o.askReason}',
-          style: ts(context, 13, color: c.textSecondary, height: 1.4)),
+      Text(
+        '"${p.heard}" — ${o.askReason}',
+        style: ts(context, 13, color: c.textSecondary, height: 1.4),
+      ),
       const SizedBox(height: 14),
       BoxCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(children: [
-          if (known != null)
-            Row(children: [
-              Text(knownLabel, style: ts(context, 14)),
-              const Spacer(),
-              Text('$known', style: ts(context, 17, w: FontWeight.w700)),
-              const SizedBox(width: 8),
-              Tag('확실', color: c.success, bg: c.success.withValues(alpha: 0.12)),
-            ]),
-          if (known != null) const SizedBox(height: 8),
-          Row(children: [
-            Text(field, style: ts(context, 14)),
-            const Spacer(),
-            Text(askPick == null ? '?' : '$askPick',
-                style: ts(context, 17, w: FontWeight.w700)),
-            const SizedBox(width: 8),
-            Tag('확인 필요', color: c.warningText, bg: c.warningBg),
-          ]),
-        ]),
+        child: Column(
+          children: [
+            if (known != null)
+              Row(
+                children: [
+                  Text(knownLabel, style: ts(context, 14)),
+                  const Spacer(),
+                  Text('$known', style: ts(context, 17, w: FontWeight.w700)),
+                  const SizedBox(width: 8),
+                  Tag(
+                    '확실',
+                    color: c.success,
+                    bg: c.success.withValues(alpha: 0.12),
+                  ),
+                ],
+              ),
+            if (known != null) const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(field, style: ts(context, 14)),
+                const Spacer(),
+                Text(
+                  askPick == null ? '?' : '$askPick',
+                  style: ts(context, 17, w: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                Tag('확인 필요', color: c.warningText, bg: c.warningBg),
+              ],
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: 14),
       Text('$field 고르기', style: ts(context, 13, w: FontWeight.w700)),
       const SizedBox(height: 8),
-      Wrap(spacing: 8, runSpacing: 8, children: [
-        for (final v in options)
-          SizedBox(
-            width: (MediaQuery.sizeOf(context).width - gutter * 2 - 16) /
-                (options.length > 4 ? 3 : 4),
-            child: askPick == v
-                ? PrimaryButton(
-                    label: '$v', height: 50, onPressed: () => _pick(v))
-                : LineButton(
-                    label: '$v',
-                    height: 50,
-                    color: c.textPrimary,
-                    onPressed: () => _pick(v)),
-          ),
-      ]),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final v in options)
+            SizedBox(
+              width:
+                  (MediaQuery.sizeOf(context).width - gutter * 2 - 16) /
+                  (options.length > 4 ? 3 : 4),
+              child: askPick == v
+                  ? PrimaryButton(
+                      label: '$v',
+                      height: 50,
+                      onPressed: () => _pick(v),
+                    )
+                  : LineButton(
+                      label: '$v',
+                      height: 50,
+                      color: c.textPrimary,
+                      onPressed: () => _pick(v),
+                    ),
+            ),
+        ],
+      ),
       const SizedBox(height: 16),
-      Row(children: [
-        Expanded(child: LineButton(label: '다시 말하기', onPressed: _start)),
-        const SizedBox(width: 8),
-        Expanded(
+      Row(
+        children: [
+          Expanded(
+            child: LineButton(label: '다시 말하기', onPressed: _start),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
             child: PrimaryButton(
-                label: askPick == null ? '적용' : '$askPick로 적용',
-                onPressed: askPick == null ? null : _apply)),
-      ]),
+              label: askPick == null ? '적용' : '$askPick로 적용',
+              onPressed: askPick == null ? null : _apply,
+            ),
+          ),
+        ],
+      ),
     ];
   }
 
@@ -454,35 +569,47 @@ class _VoiceSheetState extends State<VoiceSheet> {
         child: CircleAvatar(
           radius: 32,
           backgroundColor: c.surfaceSubtle,
-          child: Text('!',
-              style: ts(context, 26, w: FontWeight.w700, color: c.textSecondary)),
+          child: Text(
+            '!',
+            style: ts(context, 26, w: FontWeight.w700, color: c.textSecondary),
+          ),
         ),
       ),
       const SizedBox(height: 16),
       Center(
-          child: Text('잘 못 알아들었어요',
-              style: ts(context, 22, w: FontWeight.w700))),
+        child: Text('잘 못 알아들었어요', style: ts(context, 22, w: FontWeight.w700)),
+      ),
       const SizedBox(height: 10),
       Text(
-          failReason ??
-              '주변 소리가 커요. 휴대폰을 입 가까이 대고 숫자를 또박또박 말해 주세요.'
-                  '${words.isEmpty ? '' : '\n들은 말: "$words"'}',
-          textAlign: TextAlign.center,
-          style: ts(context, 14, color: c.textSecondary, height: 1.45)),
+        failReason ??
+            '주변 소리가 커요. 휴대폰을 입 가까이 대고 숫자를 또박또박 말해 주세요.'
+                '${words.isEmpty ? '' : '\n들은 말: "$words"'}',
+        textAlign: TextAlign.center,
+        style: ts(context, 14, color: c.textSecondary, height: 1.45),
+      ),
       const SizedBox(height: 12),
       Center(
-        child: Text('예) 그린까지 3, 퍼트 2 · 5타 퍼트 2',
-            style: ts(context, 12, color: c.textSecondary)),
+        child: Text(
+          '예) 그린까지 3, 퍼트 2 · 5타 퍼트 2',
+          style: ts(context, 12, color: c.textSecondary),
+        ),
       ),
       if (kDebugMode) _debugInput(context),
       const SizedBox(height: 18),
-      Row(children: [
-        Expanded(
+      Row(
+        children: [
+          Expanded(
             child: LineButton(
-                label: '버튼으로 입력', onPressed: () => Navigator.pop(context))),
-        const SizedBox(width: 8),
-        Expanded(child: PrimaryButton(label: '다시 말하기', onPressed: _start)),
-      ]),
+              label: '버튼으로 입력',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: PrimaryButton(label: '다시 말하기', onPressed: _start),
+          ),
+        ],
+      ),
     ];
   }
 }

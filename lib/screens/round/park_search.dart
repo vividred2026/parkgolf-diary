@@ -20,8 +20,9 @@ enum _Tab { recent, favorite, all }
 
 class _ParkSearchScreenState extends State<ParkSearchScreen> {
   final _q = TextEditingController();
-  late _Tab tab =
-      context.read<AppStore>().recentParks.isEmpty ? _Tab.all : _Tab.recent;
+  late _Tab tab = context.read<AppStore>().recentParks.isEmpty
+      ? _Tab.all
+      : _Tab.recent;
 
   @override
   void dispose() {
@@ -31,7 +32,9 @@ class _ParkSearchScreenState extends State<ParkSearchScreen> {
 
   Future<void> _add() async {
     final p = await Navigator.push<Park>(
-        context, MaterialPageRoute(builder: (_) => const ParkAddScreen()));
+      context,
+      MaterialPageRoute(builder: (_) => const ParkAddScreen()),
+    );
     if (p != null && mounted) Navigator.pop(context, p);
   }
 
@@ -66,92 +69,120 @@ class _ParkSearchScreenState extends State<ParkSearchScreen> {
           ),
           const SizedBox(height: 12),
           if (query.isEmpty)
-            Wrap(spacing: 8, children: [
-              Pill(
+            Wrap(
+              spacing: 8,
+              children: [
+                Pill(
                   label: '최근',
                   selected: tab == _Tab.recent,
-                  onTap: () => setState(() => tab = _Tab.recent)),
-              Pill(
+                  onTap: () => setState(() => tab = _Tab.recent),
+                ),
+                Pill(
                   label: '즐겨찾기',
                   selected: tab == _Tab.favorite,
-                  onTap: () => setState(() => tab = _Tab.favorite)),
-              Pill(
+                  onTap: () => setState(() => tab = _Tab.favorite),
+                ),
+                Pill(
                   label: '전국',
                   selected: tab == _Tab.all,
-                  onTap: () => setState(() => tab = _Tab.all)),
-            ]),
+                  onTap: () => setState(() => tab = _Tab.all),
+                ),
+              ],
+            ),
           const SizedBox(height: 12),
           const InfoBox(
-              warning: true,
-              title: '전국 파크골프장 목록이 앱에 들어 있어요 · 인터넷 없이 검색'),
+            warning: true,
+            title: '전국 파크골프장 목록이 앱에 들어 있어요 · 인터넷 없이 검색',
+          ),
           const SizedBox(height: 12),
           if (list.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
               child: Center(
                 child: Text(
-                    query.isNotEmpty
-                        ? '"$query" 검색 결과가 없어요'
-                        : tab == _Tab.favorite
-                            ? '즐겨찾기한 파크골프장이 없어요.\n☆를 눌러 추가해 보세요.'
-                            : '아직 다녀온 파크골프장이 없어요.',
-                    textAlign: TextAlign.center,
-                    style: ts(context, 13, color: c.textSecondary, height: 1.5)),
+                  query.isNotEmpty
+                      ? '"$query" 검색 결과가 없어요'
+                      : tab == _Tab.favorite
+                      ? '즐겨찾기한 파크골프장이 없어요.\n☆를 눌러 추가해 보세요.'
+                      : '아직 다녀온 파크골프장이 없어요.',
+                  textAlign: TextAlign.center,
+                  style: ts(context, 13, color: c.textSecondary, height: 1.5),
+                ),
               ),
             )
           else
-            RowGroup(children: [
-              for (final p in list)
-                InkWell(
-                  onTap: () => Navigator.pop(context, p),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Row(children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p.name,
-                                style: ts(context, 14, w: FontWeight.w700)),
-                            const SizedBox(height: 2),
+            RowGroup(
+              children: [
+                for (final p in list)
+                  InkWell(
+                    onTap: () => Navigator.pop(context, p),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  p.name,
+                                  style: ts(context, 14, w: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  [
+                                    p.summary,
+                                    if (p.region.isNotEmpty) p.region,
+                                    if (!p.builtIn) '직접 추가',
+                                  ].join(' · '),
+                                  style: ts(
+                                    context,
+                                    12,
+                                    color: c.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (store.roundCountAt(p.id) > 0)
                             Text(
-                                [
-                                  p.summary,
-                                  if (p.region.isNotEmpty) p.region,
-                                  if (!p.builtIn) '직접 추가',
-                                ].join(' · '),
-                                style:
-                                    ts(context, 12, color: c.textSecondary)),
-                          ],
-                        ),
+                              '${store.roundCountAt(p.id)}회',
+                              style: ts(
+                                context,
+                                14,
+                                w: FontWeight.w700,
+                                color: c.textSecondary,
+                              ),
+                            ),
+                          IconButton(
+                            tooltip: store.isFavorite(p.id)
+                                ? '즐겨찾기 해제'
+                                : '즐겨찾기',
+                            onPressed: () => store.toggleFavorite(p.id),
+                            icon: Icon(
+                              store.isFavorite(p.id)
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              color: store.isFavorite(p.id)
+                                  ? c.brandPrimary
+                                  : c.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                      if (store.roundCountAt(p.id) > 0)
-                        Text('${store.roundCountAt(p.id)}회',
-                            style: ts(context, 14,
-                                w: FontWeight.w700, color: c.textSecondary)),
-                      IconButton(
-                        tooltip: store.isFavorite(p.id) ? '즐겨찾기 해제' : '즐겨찾기',
-                        onPressed: () => store.toggleFavorite(p.id),
-                        icon: Icon(
-                          store.isFavorite(p.id)
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: store.isFavorite(p.id)
-                              ? c.brandPrimary
-                              : c.textSecondary,
-                        ),
-                      ),
-                    ]),
+                    ),
                   ),
-                ),
-            ]),
+              ],
+            ),
         ],
       ),
       bottomNavigationBar: BottomArea(
         child: TextButton(
           onPressed: _add,
-          child: Text('+ 목록에 없는 파크골프장 직접 추가',
-              style: ts(context, 13, w: FontWeight.w700, color: c.textSecondary)),
+          child: Text(
+            '+ 목록에 없는 파크골프장 직접 추가',
+            style: ts(context, 13, w: FontWeight.w700, color: c.textSecondary),
+          ),
         ),
       ),
     );
@@ -218,8 +249,10 @@ class _ParkAddScreenState extends State<ParkAddScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 16),
         children: [
-          Text('전국 목록에 없는 파크골프장을 직접 추가해요. 이 휴대폰에만 저장돼요.',
-              style: ts(context, 13, color: c.textSecondary, height: 1.4)),
+          Text(
+            '전국 목록에 없는 파크골프장을 직접 추가해요. 이 휴대폰에만 저장돼요.',
+            style: ts(context, 13, color: c.textSecondary, height: 1.4),
+          ),
           const SizedBox(height: 16),
           Text('파크골프장 이름', style: ts(context, 12, color: c.textSecondary)),
           const SizedBox(height: 6),
@@ -238,26 +271,37 @@ class _ParkAddScreenState extends State<ParkAddScreen> {
             decoration: const InputDecoration(hintText: '예) 성남시 분당구'),
           ),
           const SizedBox(height: 18),
-          Row(children: [
-            Expanded(
-                child: Text('코스 (${_courses.length}코스 · ${_courses.length * 9}홀)',
-                    style: ts(context, 13, w: FontWeight.w700))),
-            IconButton(
-              tooltip: '코스 빼기',
-              onPressed: _courses.length > 1
-                  ? () => setState(() => _courses.removeLast().dispose())
-                  : null,
-              icon: const Icon(Icons.remove_circle_outline_rounded),
-            ),
-            IconButton(
-              tooltip: '코스 더하기',
-              onPressed: _courses.length < 8
-                  ? () => setState(() => _courses.add(TextEditingController(
-                      text: '${String.fromCharCode(65 + _courses.length)}코스')))
-                  : null,
-              icon: const Icon(Icons.add_circle_outline_rounded),
-            ),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '코스 (${_courses.length}코스 · ${_courses.length * 9}홀)',
+                  style: ts(context, 13, w: FontWeight.w700),
+                ),
+              ),
+              IconButton(
+                tooltip: '코스 빼기',
+                onPressed: _courses.length > 1
+                    ? () => setState(() => _courses.removeLast().dispose())
+                    : null,
+                icon: const Icon(Icons.remove_circle_outline_rounded),
+              ),
+              IconButton(
+                tooltip: '코스 더하기',
+                onPressed: _courses.length < 8
+                    ? () => setState(
+                        () => _courses.add(
+                          TextEditingController(
+                            text:
+                                '${String.fromCharCode(65 + _courses.length)}코스',
+                          ),
+                        ),
+                      )
+                    : null,
+                icon: const Icon(Icons.add_circle_outline_rounded),
+              ),
+            ],
+          ),
           for (var i = 0; i < _courses.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -266,7 +310,9 @@ class _ParkAddScreenState extends State<ParkAddScreen> {
                 onChanged: (_) => setState(() {}),
                 style: ts(context, 15),
                 decoration: InputDecoration(
-                    prefixText: '${i + 1}.  ', hintText: '코스 이름'),
+                  prefixText: '${i + 1}.  ',
+                  hintText: '코스 이름',
+                ),
               ),
             ),
           const SizedBox(height: 6),
@@ -275,7 +321,9 @@ class _ParkAddScreenState extends State<ParkAddScreen> {
       ),
       bottomNavigationBar: BottomArea(
         child: PrimaryButton(
-            label: '다음 · 홀별 파', onPressed: _valid ? _next : null),
+          label: '다음 · 홀별 파',
+          onPressed: _valid ? _next : null,
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../logic/rules.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/library.dart';
 
 /// S-14-1 코스 · 홀별 파 확인 (구장 안내판을 보며 탭, 규정집 3-3-3 개수 체크)
 class HoleParScreen extends StatefulWidget {
@@ -61,36 +62,32 @@ class _HoleParScreenState extends State<HoleParScreen> {
     final counts = Rules.parCounts(course.pars);
     final filled = course.pars.where((p) => p != null).length;
     final isLast = tab == widget.courseIndexes.length - 1;
-    final allDone =
-        widget.courseIndexes.every((i) => park.courses[i].parsComplete);
+    final allDone = widget.courseIndexes.every(
+      (i) => park.courses[i].parsComplete,
+    );
 
     return Scaffold(
       appBar: const TopBar(title: '코스 · 홀별 파'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 16),
         children: [
-          BoxCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(park.name, style: ts(context, 16, w: FontWeight.w700)),
-              const SizedBox(height: 3),
-              Text(
-                  '${park.summary} (${park.courses.map((e) => e.name).join(' · ')})'
-                  '${park.builtIn ? ' · 전국 목록에서 불러옴' : ''}',
-                  style: ts(context, 12, color: c.textSecondary)),
-            ]),
+          CourseInfo(
+            name: park.name,
+            badge: '${park.holes}H',
+            courses: [for (final e in park.courses) e.name],
           ),
           const SizedBox(height: 10),
           const InfoBox(
             title: '구장 안내판을 보며 홀을 탭해 파를 고르세요',
-            body: '규정집 3-3-3: 9홀마다 Par 3 · 4 · 5가 3개씩이에요 (9홀 Par 36). '
+            body:
+                '규정집 3-3-3: 9홀마다 Par 3 · 4 · 5가 3개씩이에요 (9홀 Par 36). '
                 '개수가 맞는지 아래에서 확인해 드려요.',
           ),
           const SizedBox(height: 12),
           if (widget.courseIndexes.length > 1)
             Segmented(
               labels: [
-                for (final i in widget.courseIndexes) park.courses[i].name
+                for (final i in widget.courseIndexes) park.courses[i].name,
               ],
               index: tab,
               onChanged: (i) => setState(() {
@@ -117,57 +114,80 @@ class _HoleParScreenState extends State<HoleParScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Row(children: [
-            SizedBox(
+          Row(
+            children: [
+              SizedBox(
                 width: 32,
-                child: Text('${hole + 1}H',
-                    style: ts(context, 13, w: FontWeight.w700))),
-            for (final par in [3, 4, 5]) ...[
-              const SizedBox(width: 6),
-              Expanded(
-                child: course.pars[hole] == par
-                    ? PrimaryButton(
-                        label: 'Par $par',
-                        height: 40,
-                        onPressed: () => _setPar(par))
-                    : LineButton(
-                        label: 'Par $par',
-                        height: 40,
-                        color: c.textPrimary,
-                        onPressed: () => _setPar(par)),
+                child: Text(
+                  '${hole + 1}H',
+                  style: ts(context, 13, w: FontWeight.w700),
+                ),
               ),
+              for (final par in [3, 4, 5]) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: course.pars[hole] == par
+                      ? PrimaryButton(
+                          label: 'Par $par',
+                          height: 40,
+                          onPressed: () => _setPar(par),
+                        )
+                      : LineButton(
+                          label: 'Par $par',
+                          height: 40,
+                          color: c.textPrimary,
+                          onPressed: () => _setPar(par),
+                        ),
+                ),
+              ],
             ],
-          ]),
+          ),
           const SizedBox(height: 18),
-          Row(children: [
-            for (final par in [3, 4, 5])
-              Expanded(
-                child: Column(children: [
-                  Text('Par $par',
-                      style: ts(context, 12, color: c.textSecondary)),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${counts[par]} / 3${counts[par] == 3 ? ' ✓' : ''}',
-                    style: ts(context, 14,
-                        w: FontWeight.w700,
-                        color: counts[par] == 3
-                            ? c.brandPrimary
-                            : (counts[par]! > 3 ? c.danger : c.textPrimary)),
+          Row(
+            children: [
+              for (final par in [3, 4, 5])
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        'Par $par',
+                        style: ts(context, 12, color: c.textSecondary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${counts[par]} / 3${counts[par] == 3 ? ' ✓' : ''}',
+                        style: ts(
+                          context,
+                          14,
+                          w: FontWeight.w700,
+                          color: counts[par] == 3
+                              ? c.brandPrimary
+                              : (counts[par]! > 3 ? c.danger : c.textPrimary),
+                        ),
+                      ),
+                    ],
                   ),
-                ]),
-              ),
-          ]),
+                ),
+            ],
+          ),
           const SizedBox(height: 18),
-          Row(children: [
-            Expanded(
-              child: Text(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   '${course.name} $filled / 9홀'
                   '${filled < 9 ? ' · ${9 - filled}홀 남음' : ''}',
-                  style: ts(context, 14, w: FontWeight.w700)),
-            ),
-            Text(course.parsComplete ? '9홀 Par ${course.parTotal}' : '규정 9홀 Par 36',
-                style: ts(context, 13, color: c.textSecondary)),
-          ]),
+                  style: ts(context, 14, w: FontWeight.w700),
+                ),
+              ),
+              Text(
+                course.parsComplete
+                    ? '9홀 Par ${course.parTotal}'
+                    : '규정 9홀 Par 36',
+                style: ts(context, 13, color: c.textSecondary),
+              ),
+            ],
+          ),
           if (course.parsComplete && !Rules.matches333(course.pars)) ...[
             const SizedBox(height: 10),
             const InfoBox(
@@ -179,24 +199,28 @@ class _HoleParScreenState extends State<HoleParScreen> {
         ],
       ),
       bottomNavigationBar: BottomArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          isLast
-              ? PrimaryButton(
-                  label: widget.finishLabel,
-                  onPressed: allDone ? _finish : null)
-              : PrimaryButton(
-                  label:
-                      '${park.courses[widget.courseIndexes[tab + 1]].name}로 →',
-                  onPressed: course.parsComplete
-                      ? () => setState(() {
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            isLast
+                ? PrimaryButton(
+                    label: widget.finishLabel,
+                    onPressed: allDone ? _finish : null,
+                  )
+                : PrimaryButton(
+                    label:
+                        '${park.courses[widget.courseIndexes[tab + 1]].name}로 →',
+                    onPressed: course.parsComplete
+                        ? () => setState(() {
                             tab++;
                             _jumpToEmpty();
                           })
-                      : null),
-          const SizedBox(height: 8),
-          Text('개수가 규정과 달라도 저장할 수 있어요 (구장 사정에 따라 다를 수 있어요)',
-              style: ts(context, 11, color: c.textSecondary)),
-        ]),
+                        : null,
+                  ),
+            const SizedBox(height: 8),
+            const NoteText('개수가 규정과 달라도 저장할 수 있어요 (구장 사정에 따라 다를 수 있어요)'),
+          ],
+        ),
       ),
     );
   }
@@ -223,13 +247,21 @@ class _HoleTile extends StatelessWidget {
       onTap: onTap,
       padding: EdgeInsets.zero,
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(label, style: ts(context, 12, color: c.textSecondary)),
-          Text(par == null ? '–' : 'Par $par',
-              style: ts(context, 18,
-                  w: FontWeight.w700,
-                  color: par == null && selected ? c.brandPrimary : null)),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: ts(context, 12, color: c.textSecondary)),
+            Text(
+              par == null ? '–' : 'Par $par',
+              style: ts(
+                context,
+                18,
+                w: FontWeight.w700,
+                color: par == null && selected ? c.brandPrimary : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

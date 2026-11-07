@@ -93,7 +93,8 @@ class VoiceParser {
     '공': 0,
   };
 
-  static final String _num = '(\\d{1,2}|${(_numWords.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|')})';
+  static final String _num =
+      '(\\d{1,2}|${(_numWords.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|')})';
   static const _end = r'(?=\s|$|타|개|번|,)';
 
   static int? _toInt(String s) => int.tryParse(s) ?? _numWords[s];
@@ -140,8 +141,7 @@ class VoiceParser {
     final mentionedGreen = t.contains('그린');
     final toGreen = take(RegExp('그린\\s*(?:까지)?\\s*(?:은|는)?\\s*$_num$_end'));
     final mentionedPutts = RegExp('퍼트|퍼팅|퍼터|버트').hasMatch(t);
-    final putts =
-        take(RegExp('(?:퍼트|퍼팅|퍼터|버트)\\s*(?:는|은)?\\s*$_num$_end'));
+    final putts = take(RegExp('(?:퍼트|퍼팅|퍼터|버트)\\s*(?:는|은)?\\s*$_num$_end'));
     var total = take(RegExp('(?:^|\\s)(?:나|내|저|제)\\s*(?:는)?\\s*$_num$_end'));
     total ??= take(RegExp('(?:^|\\s)$_num\\s*타(?=\\s|\$|,)'));
 
@@ -160,8 +160,12 @@ class VoiceParser {
 
   /// 현재 홀 기록에 해석 결과를 적용해 볼 때의 결과.
   /// [forced] 는 되묻기에서 사용자가 고른 값.
-  static VoiceOutcome resolve(VoiceParse p, HoleScore? current,
-      {AskField? forcedField, int? forcedValue}) {
+  static VoiceOutcome resolve(
+    VoiceParse p,
+    HoleScore? current, {
+    AskField? forcedField,
+    int? forcedValue,
+  }) {
     if (!p.aboutMe) return VoiceOutcome(others: p.others);
 
     int? putts = p.putts;
@@ -175,16 +179,18 @@ class VoiceParser {
     if (toGreen == null && p.total != null) {
       if (putts == null) {
         return VoiceOutcome(
-            others: p.others,
-            ask: AskField.putts,
-            askReason: '총 ${p.total}타 중 퍼트 수를 알려 주세요');
+          others: p.others,
+          ask: AskField.putts,
+          askReason: '총 ${p.total}타 중 퍼트 수를 알려 주세요',
+        );
       }
       toGreen = p.total! - putts;
       if (toGreen < 1) {
         return VoiceOutcome(
-            others: p.others,
-            ask: AskField.putts,
-            askReason: '총 ${p.total}타보다 퍼트가 많아요');
+          others: p.others,
+          ask: AskField.putts,
+          askReason: '총 ${p.total}타보다 퍼트가 많아요',
+        );
       }
     }
 
@@ -198,30 +204,34 @@ class VoiceParser {
 
     if (p.mentionedGreen && toGreen == null) {
       return VoiceOutcome(
-          others: p.others,
-          ask: AskField.toGreen,
-          askReason: '그린까지 숫자가 확실하지 않아요');
+        others: p.others,
+        ask: AskField.toGreen,
+        askReason: '그린까지 숫자가 확실하지 않아요',
+      );
     }
     if (p.mentionedPutts && putts == null) {
       return VoiceOutcome(
-          others: p.others,
-          ask: AskField.putts,
-          askReason: '퍼트 숫자가 확실하지 않아요');
+        others: p.others,
+        ask: AskField.putts,
+        askReason: '퍼트 숫자가 확실하지 않아요',
+      );
     }
 
     toGreen ??= current?.toGreen;
     putts ??= current?.putts;
     if (toGreen == null) {
       return VoiceOutcome(
-          others: p.others,
-          ask: AskField.toGreen,
-          askReason: '그린까지 몇 타였는지 알려 주세요');
+        others: p.others,
+        ask: AskField.toGreen,
+        askReason: '그린까지 몇 타였는지 알려 주세요',
+      );
     }
     if (putts == null) {
       return VoiceOutcome(
-          others: p.others,
-          ask: AskField.putts,
-          askReason: '퍼트 수를 알려 주세요');
+        others: p.others,
+        ask: AskField.putts,
+        askReason: '퍼트 수를 알려 주세요',
+      );
     }
     if (toGreen < 1) toGreen = 1;
     if (newPenalty > toGreen) newPenalty = toGreen;

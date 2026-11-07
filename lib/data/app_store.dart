@@ -11,7 +11,7 @@ import 'storage.dart';
 /// 앱 전체 상태. 바뀔 때마다 휴대폰에 바로 저장해요.
 class AppStore extends ChangeNotifier {
   AppStore(this.storage, this.catalog, [AppData? data])
-      : data = data ?? AppData();
+    : data = data ?? AppData();
 
   final Storage storage;
   final ParkCatalog catalog;
@@ -22,8 +22,11 @@ class AppStore extends ChangeNotifier {
 
   Future<void> _pending = Future.value();
 
-  static Future<AppStore> open(Storage storage, ParkCatalog catalog,
-      {DateTime? now}) async {
+  static Future<AppStore> open(
+    Storage storage,
+    ParkCatalog catalog, {
+    DateTime? now,
+  }) async {
     final raw = await storage.readData();
     AppData data;
     try {
@@ -111,13 +114,12 @@ class AppStore extends ChangeNotifier {
     required String name,
     required String region,
     required List<String> courseNames,
-  }) =>
-      Park(
-        id: 'my-${_uuid.v4()}',
-        name: name.trim(),
-        region: region.trim(),
-        courses: courseNames.map((n) => Course(name: n)).toList(),
-      );
+  }) => Park(
+    id: 'my-${_uuid.v4()}',
+    name: name.trim(),
+    region: region.trim(),
+    courses: courseNames.map((n) => Course(name: n)).toList(),
+  );
 
   bool isFavorite(String id) => data.favorites.contains(id);
 
@@ -262,8 +264,7 @@ class AppStore extends ChangeNotifier {
     _changed();
   }
 
-  int get photoCount =>
-      data.rounds.fold(0, (a, r) => a + r.photos.length);
+  int get photoCount => data.rounds.fold(0, (a, r) => a + r.photos.length);
 
   // ── 백업 · 초기화 ─────────────────────────────
 

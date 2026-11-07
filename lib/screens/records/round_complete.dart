@@ -37,65 +37,93 @@ class RoundCompleteScreen extends StatelessWidget {
         children: [
           BoxCard(
             padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Icon(Icons.circle, size: 8, color: c.brandPrimary),
-                const SizedBox(width: 6),
-                Text('휴대폰에 저장했어요',
-                    style: ts(context, 12, color: c.brandPrimary)),
-              ]),
-              const SizedBox(height: 4),
-              Text('${r.parkName} · ${r.date.month}월 ${r.date.day}일',
-                  style: ts(context, 13, color: c.textSecondary)),
-              const SizedBox(height: 6),
-              Row(children: [
-                Text(big, style: ts(context, 44, w: FontWeight.w800, height: 1)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.circle, size: 8, color: c.brandPrimary),
+                    const SizedBox(width: 6),
+                    Text(
+                      '휴대폰에 저장했어요',
+                      style: ts(context, 12, color: c.brandPrimary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${r.parkName} · ${r.date.month}월 ${r.date.day}일',
+                  style: ts(context, 13, color: c.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      big,
+                      style: ts(context, 44, w: FontWeight.w800, height: 1),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
                             store.settings.scoreDisplay == ScoreDisplay.total
                                 ? roundSummary(r, store.nickname)
                                 : '${r.myTotal}타 · 퍼트 ${r.myPutts}${r.myPenalty > 0 ? ' · 벌타 ${r.myPenalty}' : ''}',
-                            style: ts(context, 14, w: FontWeight.w700)),
-                        if (park != null && park.count > 1)
-                          Text(
+                            style: ts(context, 14, w: FontWeight.w700),
+                          ),
+                          if (park != null && park.count > 1)
+                            Text(
                               '이 파크골프장 베스트 ${park.bestRound?.myTotal ?? '–'} · '
                               '평균 ${park.avgTotal?.toStringAsFixed(1) ?? '–'}',
-                              style:
-                                  ts(context, 12, color: c.textSecondary)),
-                      ]),
+                              style: ts(context, 12, color: c.textSecondary),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ]),
-            ]),
+              ],
+            ),
           ),
           if (!r.myComplete) ...[
             const SizedBox(height: 12),
             InfoBox(
-                warning: true,
-                title: '${r.holeCount - r.myEntered}홀이 비어 있어요',
-                body: '평균 · 베스트 통계에는 18홀(모든 홀)을 입력한 라운드만 들어가요.'),
+              warning: true,
+              title: '${r.holeCount - r.myEntered}홀이 비어 있어요',
+              body: '평균 · 베스트 통계에는 18홀(모든 홀)을 입력한 라운드만 들어가요.',
+            ),
           ],
         ],
       ),
       bottomNavigationBar: BottomArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          PrimaryButton(
-            label: '라운드 상세 보기',
-            onPressed: () => Navigator.pushReplacement(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PrimaryButton(
+              label: '라운드 상세 보기',
+              onPressed: () => Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => RoundDetailScreen(roundId: r.id))),
-          ),
-          TextButton(
-            onPressed: () => ScorecardShareSheet.open(context, r),
-            child: Text('스코어카드 이미지 공유',
-                style: ts(context, 13,
-                    w: FontWeight.w700, color: c.textSecondary)),
-          ),
-        ]),
+                  builder: (_) => RoundDetailScreen(roundId: r.id),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => ScorecardShareSheet.open(context, r),
+              child: Text(
+                '스코어카드 이미지 공유',
+                style: ts(
+                  context,
+                  13,
+                  w: FontWeight.w700,
+                  color: c.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,10 +5,11 @@ enum PeriodFilter { all, thisMonth, thisYear }
 /// 기록(통계 + 파크골프장별) 계산.
 class Stats {
   Stats(List<Round> rounds)
-      : rounds = rounds
-            .where((r) => r.done && r.deletedAt == null && r.myEntered > 0)
-            .toList()
-          ..sort((a, b) => b.date.compareTo(a.date));
+    : rounds =
+          rounds
+              .where((r) => r.done && r.deletedAt == null && r.myEntered > 0)
+              .toList()
+            ..sort((a, b) => b.date.compareTo(a.date));
 
   final List<Round> rounds;
 
@@ -38,9 +39,15 @@ class Stats {
     for (var k = months - 1; k >= 0; k--) {
       final m = DateTime(now.year, now.month - k);
       final rs = complete.where(
-          (r) => r.date.year == m.year && r.date.month == m.month);
-      out.add(MonthAvg(m, _avg(rs.map((r) => r.myTotal)),
-          _avg(rs.map((r) => r.myOver))));
+        (r) => r.date.year == m.year && r.date.month == m.month,
+      );
+      out.add(
+        MonthAvg(
+          m,
+          _avg(rs.map((r) => r.myTotal)),
+          _avg(rs.map((r) => r.myOver)),
+        ),
+      );
     }
     return out;
   }
@@ -77,7 +84,7 @@ class MonthAvg {
 
 class ParkSummary {
   ParkSummary(this.parkId, List<Round> rounds)
-      : rounds = (List.of(rounds)..sort((a, b) => b.date.compareTo(a.date)));
+    : rounds = (List.of(rounds)..sort((a, b) => b.date.compareTo(a.date)));
 
   final String parkId;
   final List<Round> rounds;

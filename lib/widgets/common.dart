@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'library.dart';
 
 /// 와이어프레임 공통 요소 (2027 Friends Screen Library 기반, 색은 Theme 변수).
 
-TextStyle ts(BuildContext context, double size,
-        {FontWeight w = FontWeight.w500, Color? color, double? height}) =>
-    TextStyle(
-      fontFamily: kFont,
-      fontSize: size,
-      fontWeight: w,
-      color: color ?? context.c.textPrimary,
-      height: height,
-      letterSpacing: -0.2,
-    );
+TextStyle ts(
+  BuildContext context,
+  double size, {
+  FontWeight w = FontWeight.w500,
+  Color? color,
+  double? height,
+}) => TextStyle(
+  fontFamily: kFont,
+  fontSize: size,
+  fontWeight: w,
+  color: color ?? context.c.textPrimary,
+  height: height,
+  letterSpacing: -0.2,
+);
 
 const gutter = 18.0;
 
@@ -30,14 +35,14 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) => AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          tooltip: '뒤로',
-          onPressed: onBack ?? () => Navigator.maybePop(context),
-        ),
-        title: Text(title),
-        actions: [...?actions, const SizedBox(width: 8)],
-      );
+    leading: IconButton(
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+      tooltip: '뒤로',
+      onPressed: onBack ?? () => Navigator.maybePop(context),
+    ),
+    title: Text(title),
+    actions: [...?actions, const SizedBox(width: 8)],
+  );
 }
 
 /// 채운 버튼 (brand/primary).
@@ -68,10 +73,12 @@ class PrimaryButton extends StatelessWidget {
           foregroundColor: c.brandOnPrimary,
           disabledBackgroundColor: c.surfaceSubtle,
           disabledForegroundColor: c.textDisabled,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(
-              fontFamily: kFont, fontSize: 16, fontWeight: FontWeight.w700),
+            fontFamily: kFont,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         onPressed: onPressed,
         child: Text(label),
@@ -107,10 +114,12 @@ class LineButton extends StatelessWidget {
           foregroundColor: color ?? c.textSecondary,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           side: BorderSide(color: c.borderDefault),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(
-              fontFamily: kFont, fontSize: 16, fontWeight: FontWeight.w700),
+            fontFamily: kFont,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         onPressed: onPressed,
         child: Text(label),
@@ -146,9 +155,9 @@ class BoxCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-            color: borderColor ??
-                (selected ? c.brandPrimary : c.borderDefault),
-            width: selected ? 1.5 : 1),
+          color: borderColor ?? (selected ? c.brandPrimary : c.borderDefault),
+          width: selected ? 1.5 : 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -161,7 +170,12 @@ class BoxCard extends StatelessWidget {
 
 /// 연한 배경 안내 박스.
 class InfoBox extends StatelessWidget {
-  const InfoBox({super.key, required this.title, this.body, this.warning = false});
+  const InfoBox({
+    super.key,
+    required this.title,
+    this.body,
+    this.warning = false,
+  });
 
   final String title;
   final String? body;
@@ -182,11 +196,16 @@ class InfoBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: ts(context, 13, w: FontWeight.w700, color: fg)),
+          Text(
+            title,
+            style: ts(context, 13, w: FontWeight.w700, color: fg),
+          ),
           if (body != null) ...[
             const SizedBox(height: 3),
-            Text(body!,
-                style: ts(context, 12, color: c.textSecondary, height: 1.4)),
+            Text(
+              body!,
+              style: ts(context, 12, color: c.textSecondary, height: 1.4),
+            ),
           ],
         ],
       ),
@@ -215,20 +234,28 @@ class Pill extends StatelessWidget {
     return Material(
       color: selected ? c.surfaceSelected : c.surfaceDefault,
       shape: StadiumBorder(
-          side: BorderSide(
-              color: selected ? c.brandPrimary : c.borderDefault)),
+        side: BorderSide(color: selected ? c.brandPrimary : c.borderDefault),
+      ),
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (leading != null) ...[leading!, const SizedBox(width: 4)],
-            Text(label,
-                style: ts(context, 14,
-                    w: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? c.brandPrimary : c.textSecondary)),
-          ]),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 4)],
+              Text(
+                label,
+                style: ts(
+                  context,
+                  14,
+                  w: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? c.brandPrimary : c.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -248,37 +275,10 @@ class Segmented extends StatelessWidget {
   final int index;
   final ValueChanged<int> onChanged;
 
+  // 라이브러리 tabCombination(Normal) 모양의 밑줄 탭으로 그려요.
   @override
-  Widget build(BuildContext context) {
-    final c = context.c;
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-          color: c.surfaceSubtle, borderRadius: BorderRadius.circular(10)),
-      child: Row(children: [
-        for (var i = 0; i < labels.length; i++)
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onChanged(i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: i == index ? c.surfaceDefault : Colors.transparent,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Text(labels[i],
-                    style: ts(context, 13,
-                        w: i == index ? FontWeight.w700 : FontWeight.w500,
-                        color: i == index ? c.textPrimary : c.textSecondary)),
-              ),
-            ),
-          ),
-      ]),
-    );
-  }
+  Widget build(BuildContext context) =>
+      UnderlineTabs(labels: labels, index: index, onChanged: onChanged);
 }
 
 /// 섹션 제목.
@@ -290,16 +290,24 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 6, bottom: 8),
-        child: Row(children: [
-          Expanded(
-            child: Text(text,
-                style: ts(context, 13,
-                    w: FontWeight.w700, color: context.c.textSecondary)),
+    padding: const EdgeInsets.only(top: 6, bottom: 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            style: ts(
+              context,
+              13,
+              w: FontWeight.w700,
+              color: context.c.textSecondary,
+            ),
           ),
-          ?trailing,
-        ]),
-      );
+        ),
+        ?trailing,
+      ],
+    ),
+  );
 }
 
 /// 두 줄 리스트 행 (제목 · 설명 · 오른쪽 값).
@@ -330,42 +338,60 @@ class ListRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 13),
-        child: Row(children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: ts(context, 15,
-                        w: subtitle == null ? FontWeight.w500 : FontWeight.w700,
-                        color: titleColor)),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(subtitle!,
-                      style: ts(context, 12, color: c.textSecondary)),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: ts(
+                      context,
+                      15,
+                      w: subtitle == null ? FontWeight.w500 : FontWeight.w700,
+                      color: titleColor,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: ts(context, 12, color: c.textSecondary),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.sizeOf(context).width * 0.5),
-              child: Text(trailing!,
+            if (trailing != null) ...[
+              const SizedBox(width: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.5,
+                ),
+                child: Text(
+                  trailing!,
                   textAlign: TextAlign.right,
-                  style: ts(context, 14,
-                      w: FontWeight.w700,
-                      color: trailingColor ?? c.textSecondary)),
-            ),
+                  style: ts(
+                    context,
+                    14,
+                    w: FontWeight.w700,
+                    color: trailingColor ?? c.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+            if (chevron)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: c.textSecondary,
+                ),
+              ),
           ],
-          if (chevron)
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Icon(Icons.chevron_right_rounded,
-                  size: 20, color: c.textSecondary),
-            ),
-        ]),
+        ),
       ),
     );
   }
@@ -379,14 +405,16 @@ class RowGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BoxCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        child: Column(children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: context.c.borderDefault),
-            children[i],
-          ],
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+    child: Column(
+      children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) Divider(height: 1, color: context.c.borderDefault),
+          children[i],
+        ],
+      ],
+    ),
+  );
 }
 
 /// 시트 손잡이.
@@ -395,15 +423,16 @@ class SheetHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Container(
-          margin: const EdgeInsets.only(top: 10, bottom: 18),
-          width: 54,
-          height: 4,
-          decoration: BoxDecoration(
-              color: context.c.borderDefault,
-              borderRadius: BorderRadius.circular(2)),
-        ),
-      );
+    child: Container(
+      margin: const EdgeInsets.only(top: 10, bottom: 18),
+      width: 54,
+      height: 4,
+      decoration: BoxDecoration(
+        color: context.c.borderDefault,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 }
 
 /// 작은 뱃지 (필드 · 확실 · 확인 필요 등).
@@ -418,13 +447,22 @@ class Tag extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      // 라이브러리 badge: radius 4 · 10 Bold
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-          color: bg ?? c.surfaceSelected,
-          borderRadius: BorderRadius.circular(6)),
-      child: Text(text,
-          style: ts(context, 11,
-              w: FontWeight.w700, color: color ?? c.brandPrimary)),
+        color: bg ?? c.surfaceSelected,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: ts(
+          context,
+          10,
+          w: FontWeight.w700,
+          color: color ?? c.brandPrimary,
+          height: 1.3,
+        ),
+      ),
     );
   }
 }
@@ -454,16 +492,19 @@ class RoundIconButton extends StatelessWidget {
       child: Material(
         color: filled ? c.brandPrimary : c.surfaceDefault,
         shape: CircleBorder(
-            side: filled ? BorderSide.none : BorderSide(color: c.borderDefault)),
+          side: filled ? BorderSide.none : BorderSide(color: c.borderDefault),
+        ),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
           child: SizedBox(
             width: size,
             height: size,
-            child: Icon(icon,
-                size: size * 0.4,
-                color: filled ? c.brandOnPrimary : c.textPrimary),
+            child: Icon(
+              icon,
+              size: size * 0.4,
+              color: filled ? c.brandOnPrimary : c.textPrimary,
+            ),
           ),
         ),
       ),
@@ -485,8 +526,11 @@ class BrandSwitch extends StatelessWidget {
       value: value,
       onChanged: onChanged,
       thumbColor: const WidgetStatePropertyAll(Colors.white),
-      trackColor: WidgetStateProperty.resolveWith((s) =>
-          s.contains(WidgetState.selected) ? c.brandPrimary : c.surfacePlaceholder),
+      trackColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected)
+            ? c.brandPrimary
+            : c.surfacePlaceholder,
+      ),
       trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
     );
   }
@@ -508,15 +552,21 @@ class RadioDot extends StatelessWidget {
         shape: BoxShape.circle,
         color: selected ? c.brandPrimary : c.surfaceDefault,
         border: Border.all(
-            color: selected ? c.brandPrimary : c.borderDefault, width: 1.5),
+          color: selected ? c.brandPrimary : c.borderDefault,
+          width: 1.5,
+        ),
       ),
       child: selected
           ? Center(
               child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                      shape: BoxShape.circle, color: Colors.white)))
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+              ),
+            )
           : null,
     );
   }
@@ -530,10 +580,10 @@ class BottomArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(gutter, 8, gutter, 14),
-        child: child,
-      );
+    top: false,
+    minimum: const EdgeInsets.fromLTRB(gutter, 8, gutter, 14),
+    child: child,
+  );
 }
 
 Future<bool> confirmDialog(
@@ -543,44 +593,16 @@ Future<bool> confirmDialog(
   required String confirm,
   bool danger = false,
 }) async {
-  final c = context.c;
   final r = await showDialog<bool>(
     context: context,
-    builder: (ctx) => Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: ts(ctx, 18,
-                    w: FontWeight.w700,
-                    color: danger ? c.danger : c.textPrimary)),
-            if (body != null) ...[
-              const SizedBox(height: 10),
-              Text(body,
-                  style: ts(ctx, 14, color: c.textSecondary, height: 1.45)),
-            ],
-            const SizedBox(height: 20),
-            Row(children: [
-              Expanded(
-                  child: LineButton(
-                      label: '취소',
-                      height: 50,
-                      onPressed: () => Navigator.pop(ctx, false))),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: PrimaryButton(
-                      label: confirm,
-                      height: 50,
-                      color: danger ? c.danger : null,
-                      onPressed: () => Navigator.pop(ctx, true))),
-            ]),
-          ],
-        ),
-      ),
+    builder: (ctx) => PopupCard(
+      title: title,
+      description: body,
+      cancelLabel: '취소',
+      confirmLabel: confirm,
+      danger: danger,
+      onCancel: () => Navigator.pop(ctx, false),
+      onConfirm: () => Navigator.pop(ctx, true),
     ),
   );
   return r ?? false;
@@ -592,11 +614,13 @@ void toast(BuildContext context, String msg) {
     ..showSnackBar(SnackBar(content: Text(msg)));
 }
 
-String weekday(DateTime d) => const ['월', '화', '수', '목', '금', '토', '일'][d.weekday - 1];
+String weekday(DateTime d) =>
+    const ['월', '화', '수', '목', '금', '토', '일'][d.weekday - 1];
 String md(DateTime d) =>
     '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
 String mdw(DateTime d) => '${md(d)} (${weekday(d)})';
 String ymd(DateTime d) =>
     '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
-String fullDate(DateTime d) => '${d.month}월 ${d.day}일 (${weekday(d)}) '
+String fullDate(DateTime d) =>
+    '${d.month}월 ${d.day}일 (${weekday(d)}) '
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';

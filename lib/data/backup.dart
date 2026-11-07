@@ -19,11 +19,15 @@ class Backup {
   }
 
   static Future<Uint8List> build(
-      AppData data, Storage storage, DateTime at) async {
+    AppData data,
+    Storage storage,
+    DateTime at,
+  ) async {
     final archive = Archive();
     final rounds = data.rounds.where((r) => r.deletedAt == null).length;
     final photos = <String>{for (final r in data.rounds) ...r.photos};
-    archive.addFile(ArchiveFile.string(
+    archive.addFile(
+      ArchiveFile.string(
         manifestName,
         jsonEncode({
           'format': format,
@@ -31,12 +35,16 @@ class Backup {
           'createdAt': at.toIso8601String(),
           'rounds': rounds,
           'photos': photos.length,
-        })));
+        }),
+      ),
+    );
     archive.addFile(ArchiveFile.string(dataName, jsonEncode(data.toJson())));
     for (final p in photos) {
       final bytes = await storage.readPhoto(p);
       if (bytes != null) {
-        archive.addFile(ArchiveFile.noCompress('$photoDir$p', bytes.length, bytes));
+        archive.addFile(
+          ArchiveFile.noCompress('$photoDir$p', bytes.length, bytes),
+        );
       }
     }
     return ZipEncoder().encodeBytes(archive);
@@ -61,7 +69,8 @@ class Backup {
       throw const FormatException('백업 파일이 아니에요');
     }
     final data = AppData.fromJson(
-        jsonDecode(utf8.decode(dataFile.content)) as Map<String, dynamic>);
+      jsonDecode(utf8.decode(dataFile.content)) as Map<String, dynamic>,
+    );
     final photos = <String, Uint8List>{};
     for (final f in archive.files) {
       if (f.isFile && f.name.startsWith(photoDir)) {

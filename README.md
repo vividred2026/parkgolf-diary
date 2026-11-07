@@ -48,6 +48,13 @@ Figma **PARKGOLF-DIARY › 정리 › 와이어프레임 (라이트)** (`node 21
 
 다음 단계(이번 범위 밖): 이어폰 자이로 제스처 · 워치 앱 · 샷 루틴 · 입력 설정(SS-01~04) · 워치/이어폰 연동(S-12, EP-01/02).
 
+## 컴포넌트 (2027 Friends Screen Library)
+
+`lib/widgets/library.dart` — 라이브러리 컴포넌트를 앱 위젯으로 옮겼어요 (모양 · 치수는 라이브러리, 색은 Theme 토큰).
+popupDefault → `PopupCard` · toast → SnackBar 테마 · tabCombination → `UnderlineTabs` · sort → `SortChip` ·
+labelSort / labelContents → `LabelSort` / `LabelContents` · courseInfo → `CourseInfo` · common/note → `NoteText` ·
+report/screenList → `RoundListItem` · report/scorecard → `PersonalScorecard` · badge → `Badge2` / `Tag` · bottomsheet/header → `SheetHeader`
+
 ## 색 (Figma Theme 변수)
 
 `lib/theme/app_theme.dart` — Light / Dark 두 모드. brand/primary 라이트 `#493DE7`, 다크 `#928CEE`.

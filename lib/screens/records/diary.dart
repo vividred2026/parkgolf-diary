@@ -10,6 +10,7 @@ import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/library.dart';
 
 /// S-35 라운드 다이어리 (메모 · 사진 · 자동 하이라이트)
 class DiaryScreen extends StatefulWidget {
@@ -29,7 +30,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
   void initState() {
     super.initState();
     memo = TextEditingController(
-        text: context.read<AppStore>().roundById(widget.roundId)?.memo ?? '');
+      text: context.read<AppStore>().roundById(widget.roundId)?.memo ?? '',
+    );
   }
 
   @override
@@ -62,8 +64,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Future<void> _removePhoto(Round r, String name) async {
-    final ok = await confirmDialog(context,
-        title: '사진을 지울까요?', confirm: '지우기', danger: true);
+    final ok = await confirmDialog(
+      context,
+      title: '사진을 지울까요?',
+      confirm: '지우기',
+      danger: true,
+    );
     if (ok && mounted) await context.read<AppStore>().removePhoto(r, name);
   }
 
@@ -83,7 +89,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
     final birdieHoles = [
       for (var i = 0; i < r.holeCount; i++)
-        if (r.mine[i] != null && r.mine[i]!.total < r.pars[i]) i + 1
+        if (r.mine[i] != null && r.mine[i]!.total < r.pars[i]) i + 1,
     ];
     final avgPutts = Stats(store.liveRounds).avgPutts;
 
@@ -94,23 +100,37 @@ class _DiaryScreenState extends State<DiaryScreen> {
         children: [
           BoxCard(
             padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   '${r.parkName} · ${formatRoundScoreWithUnit(r, store.settings.scoreDisplay)}',
-                  style: ts(context, 15, w: FontWeight.w700)),
-              const SizedBox(height: 3),
-              Text('${ymd(r.date)} (${weekday(r.date)}) · ${r.courseRoute}',
-                  style: ts(context, 12, color: c.textSecondary)),
-            ]),
+                  style: ts(context, 15, w: FontWeight.w700),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${ymd(r.date)} (${weekday(r.date)}) · ${r.courseRoute}',
+                  style: ts(context, 12, color: c.textSecondary),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
-          SectionLabel('사진 ${r.photos.length}',
-              trailing: GestureDetector(
-                onTap: adding ? null : () => _addPhotos(r),
-                child: Text(adding ? '추가 중…' : '+ 추가',
-                    style: ts(context, 13,
-                        w: FontWeight.w700, color: c.brandPrimary)),
-              )),
+          SectionLabel(
+            '사진 ${r.photos.length}',
+            trailing: GestureDetector(
+              onTap: adding ? null : () => _addPhotos(r),
+              child: Text(
+                adding ? '추가 중…' : '+ 추가',
+                style: ts(
+                  context,
+                  13,
+                  w: FontWeight.w700,
+                  color: c.brandPrimary,
+                ),
+              ),
+            ),
+          ),
           if (r.photos.isEmpty)
             BoxCard(
               onTap: () => _addPhotos(r),
@@ -118,8 +138,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
               borderColor: Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text('스코어카드 · 홀 · 동반자 사진을 남겨 보세요',
-                    style: ts(context, 13, color: c.textSecondary)),
+                child: Text(
+                  '스코어카드 · 홀 · 동반자 사진을 남겨 보세요',
+                  style: ts(context, 13, color: c.textSecondary),
+                ),
               ),
             )
           else
@@ -136,11 +158,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
               ),
             ),
           const SizedBox(height: 6),
-          Text(
-              store.settings.compressPhotos
-                  ? '화질을 유지하며 용량을 줄여 저장해요 · 길게 누르면 지워요'
-                  : '원본 그대로 저장해요 · 길게 누르면 지워요',
-              style: ts(context, 11, color: c.textSecondary)),
+          NoteText(
+            store.settings.compressPhotos
+                ? '화질을 유지하며 용량을 줄여 저장해요 · 길게 누르면 지워요'
+                : '원본 그대로 저장해요 · 길게 누르면 지워요',
+          ),
           const SizedBox(height: 18),
           const SectionLabel('메모'),
           TextField(
@@ -149,25 +171,28 @@ class _DiaryScreenState extends State<DiaryScreen> {
             maxLines: 8,
             style: ts(context, 14, height: 1.5),
             decoration: const InputDecoration(
-                hintText: '오늘 라운드에서 기억할 것을 적어 보세요'),
+              hintText: '오늘 라운드에서 기억할 것을 적어 보세요',
+            ),
           ),
           const SizedBox(height: 18),
           const SectionLabel('이번 라운드 하이라이트 (자동)'),
-          RowGroup(children: [
-            ListRow(
-              title: '버디',
-              trailing: birdieHoles.isEmpty
-                  ? '없음'
-                  : birdieHoles.map((h) => '$h번홀').join(' · '),
-            ),
-            ListRow(
-              title: '퍼트',
-              trailing: avgPutts == null || !r.myComplete
-                  ? '${r.myPutts}개'
-                  : '${r.myPutts}개 (평균 ${signed((r.myPutts - avgPutts).round())})',
-            ),
-            ListRow(title: '벌타', trailing: '${r.myPenalty}타'),
-          ]),
+          RowGroup(
+            children: [
+              ListRow(
+                title: '버디',
+                trailing: birdieHoles.isEmpty
+                    ? '없음'
+                    : birdieHoles.map((h) => '$h번홀').join(' · '),
+              ),
+              ListRow(
+                title: '퍼트',
+                trailing: avgPutts == null || !r.myComplete
+                    ? '${r.myPutts}개'
+                    : '${r.myPutts}개 (평균 ${signed((r.myPutts - avgPutts).round())})',
+              ),
+              ListRow(title: '벌타', trailing: '${r.myPenalty}타'),
+            ],
+          ),
         ],
       ),
       bottomNavigationBar: BottomArea(
@@ -187,8 +212,9 @@ class _Photo extends StatefulWidget {
 }
 
 class _PhotoState extends State<_Photo> {
-  late Future<Uint8List?> bytes =
-      context.read<AppStore>().storage.readPhoto(widget.name);
+  late Future<Uint8List?> bytes = context.read<AppStore>().storage.readPhoto(
+    widget.name,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -202,8 +228,12 @@ class _PhotoState extends State<_Photo> {
           color: context.c.surfaceSubtle,
           child: snap.data == null
               ? null
-              : Image.memory(snap.data!,
-                  fit: BoxFit.cover, cacheWidth: 252, gaplessPlayback: true),
+              : Image.memory(
+                  snap.data!,
+                  fit: BoxFit.cover,
+                  cacheWidth: 252,
+                  gaplessPlayback: true,
+                ),
         ),
       ),
     );

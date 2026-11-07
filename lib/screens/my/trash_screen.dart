@@ -27,34 +27,40 @@ class TrashScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
-                child: Text('삭제된 라운드가 없어요',
-                    style: ts(context, 13, color: c.textSecondary)),
+                child: Text(
+                  '삭제된 라운드가 없어요',
+                  style: ts(context, 13, color: c.textSecondary),
+                ),
               ),
             )
           else
-            RowGroup(children: [
-              for (final r in list)
-                Row(children: [
-                  Expanded(
-                    child: ListRow(
-                      title: '${md(r.date)} ${r.parkName}',
-                      subtitle:
-                          '${r.myEntered == 0 ? '입력 없음' : '${r.myTotal}타'} · ${store.daysLeft(r, now)}일 남음',
-                    ),
+            RowGroup(
+              children: [
+                for (final r in list)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ListRow(
+                          title: '${md(r.date)} ${r.parkName}',
+                          subtitle:
+                              '${r.myEntered == 0 ? '입력 없음' : '${r.myTotal}타'} · ${store.daysLeft(r, now)}일 남음',
+                        ),
+                      ),
+                      SizedBox(
+                        width: 72,
+                        child: LineButton(
+                          label: '복구',
+                          height: 46,
+                          onPressed: () {
+                            store.restoreRound(r);
+                            toast(context, '라운드를 복구했어요');
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    width: 72,
-                    child: LineButton(
-                      label: '복구',
-                      height: 46,
-                      onPressed: () {
-                        store.restoreRound(r);
-                        toast(context, '라운드를 복구했어요');
-                      },
-                    ),
-                  ),
-                ]),
-            ]),
+              ],
+            ),
         ],
       ),
       bottomNavigationBar: list.isEmpty
@@ -62,15 +68,19 @@ class TrashScreen extends StatelessWidget {
           : BottomArea(
               child: TextButton(
                 onPressed: () async {
-                  final ok = await confirmDialog(context,
-                      title: '휴지통을 비울까요?',
-                      body: '${list.length}개 라운드와 사진이 지워지고 되돌릴 수 없어요.',
-                      confirm: '비우기',
-                      danger: true);
+                  final ok = await confirmDialog(
+                    context,
+                    title: '휴지통을 비울까요?',
+                    body: '${list.length}개 라운드와 사진이 지워지고 되돌릴 수 없어요.',
+                    confirm: '비우기',
+                    danger: true,
+                  );
                   if (ok) await store.emptyTrash();
                 },
-                child: Text('휴지통 비우기',
-                    style: ts(context, 13, w: FontWeight.w700, color: c.danger)),
+                child: Text(
+                  '휴지통 비우기',
+                  style: ts(context, 13, w: FontWeight.w700, color: c.danger),
+                ),
               ),
             ),
     );

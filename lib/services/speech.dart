@@ -26,7 +26,8 @@ class SpeechService {
       );
       if (_ready) {
         final locales = await _stt.locales();
-        _localeId = locales
+        _localeId =
+            locales
                 .where((l) => l.localeId.toLowerCase().startsWith('ko'))
                 .map((l) => l.localeId)
                 .firstOrNull ??

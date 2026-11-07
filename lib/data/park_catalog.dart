@@ -38,18 +38,20 @@ class ParkCatalog {
     }).toList();
   }
 
-  static List<Course> defaultCourses(int n) => List.generate(
-      n, (i) => Course(name: '${String.fromCharCode(65 + i)}코스'));
+  static List<Course> defaultCourses(int n) =>
+      List.generate(n, (i) => Course(name: '${String.fromCharCode(65 + i)}코스'));
 
   /// 이름 · 주소 검색 (띄어쓰기 무시).
   static List<Park> search(Iterable<Park> parks, String q) {
     final k = q.replaceAll(' ', '').toLowerCase();
     if (k.isEmpty) return parks.toList();
     return parks
-        .where((p) => '${p.name}${p.address}${p.region}'
-            .replaceAll(' ', '')
-            .toLowerCase()
-            .contains(k))
+        .where(
+          (p) => '${p.name}${p.address}${p.region}'
+              .replaceAll(' ', '')
+              .toLowerCase()
+              .contains(k),
+        )
         .toList();
   }
 }

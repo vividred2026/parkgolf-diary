@@ -4,7 +4,7 @@ library;
 /// 9홀 코스 하나. pars 는 홀별 파(3·4·5), 아직 모르면 null.
 class Course {
   Course({required this.name, List<int?>? pars})
-      : pars = pars ?? List<int?>.filled(9, null);
+    : pars = pars ?? List<int?>.filled(9, null);
 
   String name;
   final List<int?> pars;
@@ -16,9 +16,9 @@ class Course {
 
   Map<String, dynamic> toJson() => {'name': name, 'pars': pars};
   factory Course.fromJson(Map<String, dynamic> j) => Course(
-        name: j['name'] as String,
-        pars: (j['pars'] as List).map((e) => e as int?).toList(),
-      );
+    name: j['name'] as String,
+    pars: (j['pars'] as List).map((e) => e as int?).toList(),
+  );
 }
 
 /// 파크골프장. builtIn 은 앱에 들어 있는 공공데이터 목록에서 온 것.
@@ -44,38 +44,42 @@ class Park {
   String get summary => '$holes홀 · ${courses.length}코스';
 
   Park copy() => Park(
-        id: id,
-        name: name,
-        address: address,
-        region: region,
-        courses: courses.map((c) => c.copy()).toList(),
-        builtIn: builtIn,
-      );
+    id: id,
+    name: name,
+    address: address,
+    region: region,
+    courses: courses.map((c) => c.copy()).toList(),
+    builtIn: builtIn,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'address': address,
-        'region': region,
-        'builtIn': builtIn,
-        'courses': courses.map((c) => c.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'address': address,
+    'region': region,
+    'builtIn': builtIn,
+    'courses': courses.map((c) => c.toJson()).toList(),
+  };
 
   factory Park.fromJson(Map<String, dynamic> j) => Park(
-        id: j['id'] as String,
-        name: j['name'] as String,
-        address: (j['address'] ?? '') as String,
-        region: (j['region'] ?? '') as String,
-        builtIn: (j['builtIn'] ?? false) as bool,
-        courses: (j['courses'] as List)
-            .map((e) => Course.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    id: j['id'] as String,
+    name: j['name'] as String,
+    address: (j['address'] ?? '') as String,
+    region: (j['region'] ?? '') as String,
+    builtIn: (j['builtIn'] ?? false) as bool,
+    courses: (j['courses'] as List)
+        .map((e) => Course.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// 내 한 홀 기록. toGreen 은 벌타를 포함한 그린까지 타수, penalty 는 그중 벌타.
 class HoleScore {
-  const HoleScore({required this.toGreen, required this.putts, this.penalty = 0});
+  const HoleScore({
+    required this.toGreen,
+    required this.putts,
+    this.penalty = 0,
+  });
 
   final int toGreen;
   final int putts;
@@ -84,17 +88,17 @@ class HoleScore {
   int get total => toGreen + putts;
 
   HoleScore copyWith({int? toGreen, int? putts, int? penalty}) => HoleScore(
-        toGreen: toGreen ?? this.toGreen,
-        putts: putts ?? this.putts,
-        penalty: penalty ?? this.penalty,
-      );
+    toGreen: toGreen ?? this.toGreen,
+    putts: putts ?? this.putts,
+    penalty: penalty ?? this.penalty,
+  );
 
   Map<String, dynamic> toJson() => {'g': toGreen, 'p': putts, 'b': penalty};
   factory HoleScore.fromJson(Map<String, dynamic> j) => HoleScore(
-        toGreen: j['g'] as int,
-        putts: j['p'] as int,
-        penalty: (j['b'] ?? 0) as int,
-      );
+    toGreen: j['g'] as int,
+    putts: j['p'] as int,
+    penalty: (j['b'] ?? 0) as int,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -122,11 +126,14 @@ class Round {
     this.deletedAt,
     this.memo = '',
     List<String>? photos,
-  })  : mine = mine ?? List<HoleScore?>.filled(pars.length, null),
-        others = others ??
-            List.generate(
-                companions.length, (_) => List<int?>.filled(pars.length, null)),
-        photos = photos ?? [];
+  }) : mine = mine ?? List<HoleScore?>.filled(pars.length, null),
+       others =
+           others ??
+           List.generate(
+             companions.length,
+             (_) => List<int?>.filled(pars.length, null),
+           ),
+       photos = photos ?? [];
 
   final String id;
   final String parkId;
@@ -190,43 +197,45 @@ class Round {
   String get courseRoute => courseNames.join(' → ');
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'parkId': parkId,
-        'parkName': parkName,
-        'date': date.toIso8601String(),
-        'courseNames': courseNames,
-        'pars': pars,
-        'companions': companions,
-        'mine': mine.map((h) => h?.toJson()).toList(),
-        'others': others,
-        'done': done,
-        'deletedAt': deletedAt?.toIso8601String(),
-        'memo': memo,
-        'photos': photos,
-      };
+    'id': id,
+    'parkId': parkId,
+    'parkName': parkName,
+    'date': date.toIso8601String(),
+    'courseNames': courseNames,
+    'pars': pars,
+    'companions': companions,
+    'mine': mine.map((h) => h?.toJson()).toList(),
+    'others': others,
+    'done': done,
+    'deletedAt': deletedAt?.toIso8601String(),
+    'memo': memo,
+    'photos': photos,
+  };
 
   factory Round.fromJson(Map<String, dynamic> j) => Round(
-        id: j['id'] as String,
-        parkId: j['parkId'] as String,
-        parkName: j['parkName'] as String,
-        date: DateTime.parse(j['date'] as String),
-        courseNames: (j['courseNames'] as List).cast<String>(),
-        pars: (j['pars'] as List).cast<int>(),
-        companions: (j['companions'] as List).cast<String>(),
-        mine: (j['mine'] as List)
-            .map((e) =>
-                e == null ? null : HoleScore.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        others: (j['others'] as List)
-            .map((l) => (l as List).map((e) => e as int?).toList())
-            .toList(),
-        done: (j['done'] ?? false) as bool,
-        deletedAt: j['deletedAt'] == null
-            ? null
-            : DateTime.parse(j['deletedAt'] as String),
-        memo: (j['memo'] ?? '') as String,
-        photos: ((j['photos'] ?? []) as List).cast<String>(),
-      );
+    id: j['id'] as String,
+    parkId: j['parkId'] as String,
+    parkName: j['parkName'] as String,
+    date: DateTime.parse(j['date'] as String),
+    courseNames: (j['courseNames'] as List).cast<String>(),
+    pars: (j['pars'] as List).cast<int>(),
+    companions: (j['companions'] as List).cast<String>(),
+    mine: (j['mine'] as List)
+        .map(
+          (e) =>
+              e == null ? null : HoleScore.fromJson(e as Map<String, dynamic>),
+        )
+        .toList(),
+    others: (j['others'] as List)
+        .map((l) => (l as List).map((e) => e as int?).toList())
+        .toList(),
+    done: (j['done'] ?? false) as bool,
+    deletedAt: j['deletedAt'] == null
+        ? null
+        : DateTime.parse(j['deletedAt'] as String),
+    memo: (j['memo'] ?? '') as String,
+    photos: ((j['photos'] ?? []) as List).cast<String>(),
+  );
 }
 
 enum ScoreDisplay { overPar, total }
@@ -247,24 +256,26 @@ class Settings {
   DateTime? lastBackupAt;
 
   Map<String, dynamic> toJson() => {
-        'scoreDisplay': scoreDisplay.name,
-        'themeMode': themeMode.name,
-        'compressPhotos': compressPhotos,
-        'lastBackupAt': lastBackupAt?.toIso8601String(),
-      };
+    'scoreDisplay': scoreDisplay.name,
+    'themeMode': themeMode.name,
+    'compressPhotos': compressPhotos,
+    'lastBackupAt': lastBackupAt?.toIso8601String(),
+  };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
-        scoreDisplay: ScoreDisplay.values.firstWhere(
-            (e) => e.name == j['scoreDisplay'],
-            orElse: () => ScoreDisplay.overPar),
-        themeMode: AppThemeMode.values.firstWhere(
-            (e) => e.name == j['themeMode'],
-            orElse: () => AppThemeMode.system),
-        compressPhotos: (j['compressPhotos'] ?? true) as bool,
-        lastBackupAt: j['lastBackupAt'] == null
-            ? null
-            : DateTime.parse(j['lastBackupAt'] as String),
-      );
+    scoreDisplay: ScoreDisplay.values.firstWhere(
+      (e) => e.name == j['scoreDisplay'],
+      orElse: () => ScoreDisplay.overPar,
+    ),
+    themeMode: AppThemeMode.values.firstWhere(
+      (e) => e.name == j['themeMode'],
+      orElse: () => AppThemeMode.system,
+    ),
+    compressPhotos: (j['compressPhotos'] ?? true) as bool,
+    lastBackupAt: j['lastBackupAt'] == null
+        ? null
+        : DateTime.parse(j['lastBackupAt'] as String),
+  );
 }
 
 /// 휴대폰에 저장되는 전체 데이터.
@@ -277,12 +288,12 @@ class AppData {
     List<String>? recentParkIds,
     List<String>? recentCompanions,
     List<Round>? rounds,
-  })  : settings = settings ?? Settings(),
-        parks = parks ?? [],
-        favorites = favorites ?? [],
-        recentParkIds = recentParkIds ?? [],
-        recentCompanions = recentCompanions ?? [],
-        rounds = rounds ?? [];
+  }) : settings = settings ?? Settings(),
+       parks = parks ?? [],
+       favorites = favorites ?? [],
+       recentParkIds = recentParkIds ?? [],
+       recentCompanions = recentCompanions ?? [],
+       rounds = rounds ?? [];
 
   static const schemaVersion = 1;
 
@@ -297,30 +308,29 @@ class AppData {
   final List<Round> rounds;
 
   Map<String, dynamic> toJson() => {
-        'version': schemaVersion,
-        'nickname': nickname,
-        'settings': settings.toJson(),
-        'parks': parks.map((p) => p.toJson()).toList(),
-        'favorites': favorites,
-        'recentParkIds': recentParkIds,
-        'recentCompanions': recentCompanions,
-        'rounds': rounds.map((r) => r.toJson()).toList(),
-      };
+    'version': schemaVersion,
+    'nickname': nickname,
+    'settings': settings.toJson(),
+    'parks': parks.map((p) => p.toJson()).toList(),
+    'favorites': favorites,
+    'recentParkIds': recentParkIds,
+    'recentCompanions': recentCompanions,
+    'rounds': rounds.map((r) => r.toJson()).toList(),
+  };
 
   factory AppData.fromJson(Map<String, dynamic> j) => AppData(
-        nickname: j['nickname'] as String?,
-        settings: j['settings'] == null
-            ? null
-            : Settings.fromJson(j['settings'] as Map<String, dynamic>),
-        parks: ((j['parks'] ?? []) as List)
-            .map((e) => Park.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        favorites: ((j['favorites'] ?? []) as List).cast<String>(),
-        recentParkIds: ((j['recentParkIds'] ?? []) as List).cast<String>(),
-        recentCompanions:
-            ((j['recentCompanions'] ?? []) as List).cast<String>(),
-        rounds: ((j['rounds'] ?? []) as List)
-            .map((e) => Round.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    nickname: j['nickname'] as String?,
+    settings: j['settings'] == null
+        ? null
+        : Settings.fromJson(j['settings'] as Map<String, dynamic>),
+    parks: ((j['parks'] ?? []) as List)
+        .map((e) => Park.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    favorites: ((j['favorites'] ?? []) as List).cast<String>(),
+    recentParkIds: ((j['recentParkIds'] ?? []) as List).cast<String>(),
+    recentCompanions: ((j['recentCompanions'] ?? []) as List).cast<String>(),
+    rounds: ((j['rounds'] ?? []) as List)
+        .map((e) => Round.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }

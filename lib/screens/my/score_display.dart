@@ -21,19 +21,24 @@ class ScoreDisplayScreen extends StatelessWidget {
     final over = sample?.myOver ?? 17;
 
     Widget option(ScoreDisplay d, String title, String sub) => InkWell(
-          onTap: () => store.setScoreDisplay(d),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            child: Row(children: [
-              RadioDot(selected: cur == d),
-              const SizedBox(width: 14),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      onTap: () => store.setScoreDisplay(d),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            RadioDot(selected: cur == d),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(title, style: ts(context, 15, w: FontWeight.w700)),
                 Text(sub, style: ts(context, 12, color: c.textSecondary)),
-              ]),
-            ]),
-          ),
-        );
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
 
     final o = over > 0 ? '+$over' : '$over';
     return Scaffold(
@@ -41,18 +46,24 @@ class ScoreDisplayScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 24),
         children: [
-          Text('라운드 기록과 통계에서 스코어를 어떻게 보여 줄지 골라요.',
-              style: ts(context, 13, color: c.textSecondary)),
+          Text(
+            '라운드 기록과 통계에서 스코어를 어떻게 보여 줄지 골라요.',
+            style: ts(context, 13, color: c.textSecondary),
+          ),
           const SizedBox(height: 12),
-          RowGroup(children: [
-            option(ScoreDisplay.overPar, '오버타수', '$o · 파 기준 위아래'),
-            option(ScoreDisplay.total, '총타수', '$total타'),
-          ]),
+          RowGroup(
+            children: [
+              option(ScoreDisplay.overPar, '오버타수', '$o · 파 기준 위아래'),
+              option(ScoreDisplay.total, '총타수', '$total타'),
+            ],
+          ),
           const SizedBox(height: 20),
           Text('미리보기', style: ts(context, 12, color: c.textSecondary)),
           const SizedBox(height: 4),
-          Text('$name   ${cur == ScoreDisplay.overPar ? o : '$total타'}',
-              style: ts(context, 16, w: FontWeight.w700)),
+          Text(
+            '$name   ${cur == ScoreDisplay.overPar ? o : '$total타'}',
+            style: ts(context, 16, w: FontWeight.w700),
+          ),
         ],
       ),
     );

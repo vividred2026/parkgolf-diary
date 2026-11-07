@@ -109,7 +109,9 @@ SystemUiOverlayStyle systemBarsStyle(Brightness b) {
     statusBarBrightness: b, // iOS
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    systemNavigationBarIconBrightness: dark
+        ? Brightness.light
+        : Brightness.dark,
     systemNavigationBarContrastEnforced: false,
     systemStatusBarContrastEnforced: false,
   );
@@ -117,16 +119,14 @@ SystemUiOverlayStyle systemBarsStyle(Brightness b) {
 
 ThemeData buildTheme(Brightness b) {
   final c = b == Brightness.light ? AppColors.light : AppColors.dark;
-  final scheme = ColorScheme.fromSeed(
-    seedColor: c.brandPrimary,
-    brightness: b,
-  ).copyWith(
-    primary: c.brandPrimary,
-    onPrimary: c.brandOnPrimary,
-    surface: c.bgScreen,
-    onSurface: c.textPrimary,
-    error: c.danger,
-  );
+  final scheme = ColorScheme.fromSeed(seedColor: c.brandPrimary, brightness: b)
+      .copyWith(
+        primary: c.brandPrimary,
+        onPrimary: c.brandOnPrimary,
+        surface: c.bgScreen,
+        onSurface: c.textPrimary,
+        error: c.danger,
+      );
   return ThemeData(
     useMaterial3: true,
     brightness: b,
@@ -162,11 +162,18 @@ ThemeData buildTheme(Brightness b) {
       backgroundColor: c.bgScreen,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
+    // 라이브러리 toast: radius 8 · 14 Bold
     snackBarTheme: SnackBarThemeData(
       backgroundColor: c.inverseBg,
-      contentTextStyle: TextStyle(fontFamily: kFont, color: c.inverseText),
+      contentTextStyle: TextStyle(
+        fontFamily: kFont,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: c.inverseText,
+      ),
+      actionTextColor: c.inverseText,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
