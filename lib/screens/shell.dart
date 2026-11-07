@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -72,21 +71,6 @@ class MainShellState extends State<MainShell> {
                       ).copyWith(letterSpacing: 0),
                     ),
                   ),
-                // nav:S-60 (더보기 → MY)
-                _TabItem(
-                  label: '더보기',
-                  selected: false,
-                  onTap: () => go(2),
-                  child: SvgPicture.asset(
-                    'assets/icons/more.svg',
-                    width: 17.461,
-                    height: 3.914,
-                    colorFilter: ColorFilter.mode(
-                      c.textSecondary,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
