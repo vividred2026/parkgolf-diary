@@ -64,7 +64,12 @@ class _EarphoneScreenState extends State<EarphoneScreen> {
     } else {
       final p = ear.pods;
       body = ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          12,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           BoxCard(
             child: Padding(
@@ -193,9 +198,19 @@ class _EarphoneScreenState extends State<EarphoneScreen> {
       );
     }
 
+    final empty = body is _Empty ? body : null;
     return Scaffold(
       appBar: const TopBar(title: '이어폰'),
       body: body,
+      // 빈 상태 버튼도 다른 화면처럼 하단 고정 영역에 둬서 내비게이션 바에 가리지 않게 해요
+      bottomNavigationBar: empty == null || empty.action == null
+          ? null
+          : BottomArea(
+              child: PrimaryButton(
+                label: empty.action!,
+                onPressed: empty.onAction,
+              ),
+            ),
     );
   }
 
@@ -256,9 +271,6 @@ class _Empty extends StatelessWidget {
             body,
             style: ts(context, 14, color: c.textSecondary, height: 1.5),
           ),
-          const Spacer(),
-          if (action != null)
-            PrimaryButton(label: action!, onPressed: onAction),
         ],
       ),
     );
@@ -738,7 +750,12 @@ class EarphoneInfoScreen extends StatelessWidget {
     return Scaffold(
       appBar: const TopBar(title: '이어폰 정보'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          12,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           RowGroup(
             children: [

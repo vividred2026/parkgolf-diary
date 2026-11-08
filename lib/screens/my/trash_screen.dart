@@ -19,7 +19,12 @@ class TrashScreen extends StatelessWidget {
     return Scaffold(
       appBar: const TopBar(title: '삭제된 라운드'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          12,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           const InfoBox(title: '삭제한 라운드는 30일 동안 보관했다가 자동으로 지워져요.'),
           const SizedBox(height: 12),

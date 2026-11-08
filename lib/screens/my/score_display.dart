@@ -44,7 +44,12 @@ class ScoreDisplayScreen extends StatelessWidget {
     return Scaffold(
       appBar: const TopBar(title: '타수 표시'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 8, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          8,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           Text(
             '라운드 기록과 통계에서 스코어를 어떻게 보여 줄지 골라요.',

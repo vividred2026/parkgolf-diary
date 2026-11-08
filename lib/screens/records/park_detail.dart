@@ -63,7 +63,12 @@ class _ParkDetailScreenState extends State<ParkDetailScreen> {
     return Scaffold(
       appBar: TopBar(title: summary.parkName),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          12,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           BoxCard(
             padding: const EdgeInsets.all(14),

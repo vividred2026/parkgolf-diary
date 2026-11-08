@@ -79,7 +79,12 @@ class _RoundDetailScreenState extends State<RoundDetailScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(gutter, 12, gutter, 24),
+        padding: EdgeInsets.fromLTRB(
+          gutter,
+          12,
+          gutter,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           BoxCard(
             padding: const EdgeInsets.all(16),
