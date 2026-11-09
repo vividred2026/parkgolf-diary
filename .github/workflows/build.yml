@@ -1,0 +1,69 @@
+# 테스트용 설치 파일 만들기 — push 할 때마다 (또는 Actions 탭에서 직접 실행)
+# - Android: 릴리스 APK (디버그 키 서명 · 바로 설치 가능)
+# - iOS: 서명 없는 IPA (Sideloadly · AltStore 등에서 본인 Apple ID로 서명해 설치)
+# 결과는 릴리스 「test-latest」와 Actions 아티팩트에 올라가요.
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build apk --release
+      - run: cp build/app/outputs/flutter-apk/app-release.apk parkgolf-diary-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parkgolf-diary-android
+          path: parkgolf-diary-android.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-latest
+          name: 테스트 빌드 (최신)
+          prerelease: true
+          files: parkgolf-diary-android.apk
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.9
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: IPA 묶기 (서명 없음)
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr parkgolf-diary-ios-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parkgolf-diary-ios
+          path: parkgolf-diary-ios-unsigned.ipa
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-latest
+          name: 테스트 빌드 (최신)
+          prerelease: true
+          files: parkgolf-diary-ios-unsigned.ipa
